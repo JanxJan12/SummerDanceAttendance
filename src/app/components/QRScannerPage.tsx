@@ -113,6 +113,26 @@ const handleScan = async (data: string) => {
       throw new Error("No active session for today");
     }
 
+    // ✅ GET CURRENT TIME (HH:MM format)
+    const now = new Date();
+    const currentTime = now.toTimeString().slice(0, 5);
+
+    // ✅ SESSION SETTINGS
+    const lateTime = session.late_time;
+    const cutoffTime = session.cutoff_time;
+
+    // ❌ BLOCK AFTER CUTOFF
+    if (cutoffTime && currentTime > cutoffTime) {
+      throw new Error("Session is closed");
+    }
+
+    // ⚠️ DETERMINE STATUS
+    let attendanceStatus = "Present";
+
+    if (lateTime && currentTime > lateTime) {
+      attendanceStatus = "Late";
+    }
+
     // ✅ 3. PARSE QR
     let studentId;
 
@@ -150,6 +170,7 @@ const handleScan = async (data: string) => {
         {
           student_id: studentId,
           session_id: session.id,
+          status: attendanceStatus,
         },
       ]);
 
@@ -160,7 +181,7 @@ const handleScan = async (data: string) => {
     // ✅ 6. SUCCESS UI
     const result: ScanResult = {
       id: studentId.toString(),
-      name: `Participant ${studentId}`,
+      name: `${attendanceStatus} - Participant ${studentId}`,
       time: new Date().toLocaleTimeString("en-US", {
         hour: "2-digit",
         minute: "2-digit",
@@ -169,9 +190,11 @@ const handleScan = async (data: string) => {
     };
 
     // 🔥 vibration feedback
-    if (navigator.vibrate) {
-      navigator.vibrate(100);
-    }
+if (navigator.vibrate) {
+  navigator.vibrate(
+    attendanceStatus === "Late" ? [100, 50, 100] : 100
+  );
+}
 
     setScanResult(result);
     setRecentScans((prev) => [result, ...prev.slice(0, 9)]);

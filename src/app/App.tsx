@@ -37,6 +37,9 @@ export default function App()  {
   const [editingParticipant, setEditingParticipant] = useState<any | null>(null);
   const [qrData, setQrData] = useState<any | null>(null);
 
+  const [lateTime, setLateTime] = useState("");
+  const [cutoffTime, setCutoffTime] = useState("");
+
   // ✅ LOAD DATA
 const loadData = async () => {
   // ✅ 1. GET TODAY
@@ -50,6 +53,11 @@ const { data: sessionData } = await supabase
   .maybeSingle();
 
 setSession(sessionData);
+
+if (sessionData) {
+  setLateTime(sessionData.late_time || "");
+  setCutoffTime(sessionData.cutoff_time || "");
+}
 
   // ✅ 3. GET STUDENTS
   const { data: studentsData } = await supabase
@@ -156,7 +164,7 @@ const handleCreateSession = async () => {
 
       gender: student.gender || "-",
 
-      status: record ? "Present" : "Absent",
+      status: record?.status || "Absent",
 
       time: record
         ? new Date(record.created_at).toLocaleTimeString("en-PH", {
@@ -187,7 +195,13 @@ const handleCreateSession = async () => {
     (r) => r.status === "Present"
   ).length;
 
-  const absentCount = attendanceRecords.length - presentCount;
+  const lateCount = attendanceRecords.filter(
+    (r) => r.status === "Late"
+  ).length;
+
+  const absentCount = attendanceRecords.filter(
+    (r) => r.status === "Absent"
+  ).length;
 
   // ✅ DELETE
   const handleDeleteParticipant = async (id: number) => {
@@ -215,6 +229,21 @@ const handleSaveParticipant = async (updated: any) => {
     .eq("id", updated.id);
 
   setEditingParticipant(null);
+  loadData();
+};
+
+const handleSaveSessionSettings = async () => {
+  if (!session) return;
+
+  await supabase
+    .from("sessions")
+    .update({
+      late_time: lateTime,
+      cutoff_time: cutoffTime,
+    })
+    .eq("id", session.id);
+
+  alert("Session settings updated");
   loadData();
 };
 
@@ -328,12 +357,59 @@ if (currentPage === "scanner") {
               </div>
             )}
           </div>
+          
       {activeTab === "attendance" ? (
         <>
           <StatsCards
             presentCount={presentCount}
             absentCount={absentCount}
           />
+          {/* ✅ SESSION SETTINGS (ONLY TODAY + HAS SESSION) */}
+{session && isToday && (
+  <div className="bg-white p-4 rounded-lg shadow mt-4">
+    <h3 className="text-sm font-semibold text-gray-700 mb-3">
+      Session Settings
+    </h3>
+
+    <div className="flex flex-col sm:flex-row gap-4 items-end">
+
+      {/* Late Time */}
+      <div className="flex flex-col">
+        <label className="text-xs text-gray-500 mb-1">
+          Late Time
+        </label>
+        <input
+          type="time"
+          value={lateTime}
+          onChange={(e) => setLateTime(e.target.value)}
+          className="border rounded px-3 py-2 text-sm"
+        />
+      </div>
+
+      {/* Cutoff Time */}
+      <div className="flex flex-col">
+        <label className="text-xs text-gray-500 mb-1">
+          Cutoff Time
+        </label>
+        <input
+          type="time"
+          value={cutoffTime}
+          onChange={(e) => setCutoffTime(e.target.value)}
+          className="border rounded px-3 py-2 text-sm"
+        />
+      </div>
+
+      {/* Save Button */}
+      <button
+        onClick={handleSaveSessionSettings}
+        className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700"
+      >
+        Save
+      </button>
+
+    </div>
+  </div>
+)}
 
           {/* ❌ NO SESSION */}
           {!session && (
