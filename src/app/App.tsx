@@ -26,8 +26,9 @@ export default function App()  {
   );
 
 
-  const [participants, setParticipants] = useState<any[]>([]);
+  const [participants, setParticipants] = useState<any[]>([]);  
   const [attendance, setAttendance] = useState<any[]>([]);
+  const [session, setSession] = useState<any | null>(null);
   const todayDate: string = new Date().toLocaleDateString("en-CA");
 
   const [selectedDate, setSelectedDate] = useState(todayDate);
@@ -42,11 +43,13 @@ const loadData = async () => {
   const today = selectedDate;
 
   // ✅ 2. GET TODAY'S SESSION
-  const { data: session } = await supabase
-    .from("sessions")
-    .select("*")
-    .eq("session_date", today)
-    .single();
+const { data: sessionData } = await supabase
+  .from("sessions")
+  .select("*")
+  .eq("session_date", today)
+  .maybeSingle();
+
+setSession(sessionData);
 
   // ✅ 3. GET STUDENTS
   const { data: studentsData } = await supabase
@@ -56,11 +59,11 @@ const loadData = async () => {
   let attendanceData: any[] = [];
 
   // ✅ 4. GET ATTENDANCE ONLY FOR TODAY
-  if (session) {
+  if (sessionData) {
     const { data } = await supabase
       .from("attendance")
       .select("*")
-      .eq("session_id", session.id); // 🔥 THIS IS THE FIX
+      .eq("session_id", sessionData.id); // 🔥 THIS IS THE FIX
 
     attendanceData = data || [];
   }
@@ -250,56 +253,72 @@ if (currentPage === "scanner") {
         
 
         <SearchBar value={searchQuery} onChange={setSearchQuery} />
-       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-lg font-semibold">Attendance</h2>
+          <div className="flex justify-between items-center mb-4">
+            
+            {/* ✅ Dynamic Title */}
+            <h2 className="text-lg font-semibold">
+              {activeTab === "attendance" ? "Attendance" : "Participants"}
+            </h2>
 
-        <div className="flex items-center gap-2">
-          
-          {/* 📅 Date Picker */}
-          <div className="flex items-center gap-2 bg-white border rounded-lg px-3 py-2">
-            <span>📅</span>
-            <input
-              type="date"
-              value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
-              className="outline-none"
-            />
-            {/* ✅ TODAY LABEL */}
-            {selectedDate === todayDate && (
-              <span className="text-green-600 text-sm font-medium">
-                ● Today
-              </span>
+            {/* ✅ ONLY SHOW DATE PICKER IN ATTENDANCE TAB */}
+            {activeTab === "attendance" && (
+              <div className="flex items-center gap-2">
+                
+                {/* 📅 Date Picker */}
+                <div className="flex items-center gap-2 bg-white border rounded-lg px-3 py-2">
+                  <span>📅</span>
+                  <input
+                    type="date"
+                    value={selectedDate}
+                    onChange={(e) => setSelectedDate(e.target.value)}
+                    className="outline-none"
+                  />
+
+                  {/* ● Today Indicator */}
+                  {selectedDate === todayDate && (
+                    <span className="text-green-600 text-sm font-medium">
+                      ● Today
+                    </span>
+                  )}
+                </div>
+
+                {/* 🔥 Back to Today */}
+                {selectedDate !== todayDate && (
+                  <button
+                    onClick={() => setSelectedDate(todayDate)}
+                    className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm"
+                  >
+                    Back to Today
+                  </button>
+                )}
+
+              </div>
             )}
           </div>
+      {activeTab === "attendance" ? (
+        <>
+          <StatsCards
+            presentCount={presentCount}
+            absentCount={absentCount}
+          />
 
-          {/* 🔥 Back to Today Button */}
-          {selectedDate !== todayDate && (
-            <button
-              onClick={() => setSelectedDate(todayDate)}
-              className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm"
-            >
-              Back to Today
-            </button>
+          {/* ❌ NO SESSION */}
+          {!session && (
+            <div className="bg-yellow-100 text-yellow-800 p-4 rounded-lg text-center">
+              There is no attendance record on this day
+            </div>
           )}
-          
 
-        </div>
-</div>
-        
-        {activeTab === "attendance" ? (
-          <>
-            <StatsCards
-              presentCount={presentCount}
-              absentCount={absentCount}
-            />
-
+          {/* ✅ SHOW TABLE */}
+          {session && (
             <AttendanceTable
-            records={filteredAttendance}
-            onShowQR={handleShowQR}
-            onDownloadQR={handleDownloadQR}
+              records={filteredAttendance}
+              onShowQR={handleShowQR}
+              onDownloadQR={handleDownloadQR}
             />
-          </>
-        ) : (
+          )}
+        </>
+      ) : (
           <ParticipantsTable
             participants={filteredParticipants}
             onEdit={(p:any) => 

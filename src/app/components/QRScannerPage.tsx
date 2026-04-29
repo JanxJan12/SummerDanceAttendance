@@ -32,21 +32,41 @@ export default function QRScannerPage() {
       const codeReader = new BrowserMultiFormatReader();
       codeReaderRef.current = codeReader;
 
-    const videoInputDevices = await BrowserMultiFormatReader.listVideoInputDevices();
-      if (videoInputDevices.length === 0) {
-        console.error('No camera found');
-        return;
-      }
+const devices = await BrowserMultiFormatReader.listVideoInputDevices();
 
-      setScanning(true);
+if (devices.length === 0) {
+  console.error("No camera found");
+  return;
+}
 
-      await codeReader.decodeFromVideoDevice(
-        undefined,
-        videoRef.current!,
-        (result, error) => {
-          if (result) {
-            handleScan(result.getText());
-          }
+// 🔥 Prefer BACK camera (important for phones)
+const backCamera =
+  devices.find((d) => d.label.toLowerCase().includes("back")) || devices[0];
+
+// 🔥 Request better quality stream
+const stream = await navigator.mediaDevices.getUserMedia({
+  video: {
+    deviceId: backCamera.deviceId,
+    facingMode: "environment",
+    width: { ideal: 1280 },
+    height: { ideal: 720 },
+  },
+});
+
+if (videoRef.current) {
+  videoRef.current.srcObject = stream;
+}
+
+setScanning(true);
+
+// 🔥 Use selected camera
+await codeReader.decodeFromVideoDevice(
+  backCamera.deviceId,
+  videoRef.current!,
+  (result, error) => {
+    if (result) {
+      handleScan(result.getText());
+    }
   }
 );
     } catch (err:any) {

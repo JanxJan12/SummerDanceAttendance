@@ -28,7 +28,7 @@ export default function AttendanceTable({
         <table className="w-full min-w-[640px]">
           <thead>
             <tr className="bg-gray-50 border-b">
-              <th className="px-4 py-3 text-left text-sm">Name</th>
+              <th className="px-4 py-3 text-left text-sm">Full Name</th>
               <th className="px-4 py-3 text-left text-sm">Age</th>
               <th className="px-4 py-3 text-left text-sm">Gender</th>
               <th className="px-4 py-3 text-left text-sm">Status</th>
