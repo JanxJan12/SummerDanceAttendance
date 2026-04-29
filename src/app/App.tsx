@@ -28,19 +28,47 @@ export default function App()  {
 
   const [participants, setParticipants] = useState<any[]>([]);
   const [attendance, setAttendance] = useState<any[]>([]);
+  const todayDate: string = new Date().toLocaleDateString("en-CA");
+
+  const [selectedDate, setSelectedDate] = useState(todayDate);
   const [searchQuery, setSearchQuery] = useState("");
 
   const [editingParticipant, setEditingParticipant] = useState<any | null>(null);
   const [qrData, setQrData] = useState<any | null>(null);
 
   // ✅ LOAD DATA
-  const loadData = async () => {
-    const { data: studentsData } = await supabase.from("students").select("*");
-    const { data: attendanceData } = await supabase.from("attendance").select("*");
+const loadData = async () => {
+  // ✅ 1. GET TODAY
+  const today = selectedDate;
 
-    setParticipants(studentsData || []);
-    setAttendance(attendanceData || []);
-  };
+  // ✅ 2. GET TODAY'S SESSION
+  const { data: session } = await supabase
+    .from("sessions")
+    .select("*")
+    .eq("session_date", today)
+    .single();
+
+  // ✅ 3. GET STUDENTS
+  const { data: studentsData } = await supabase
+    .from("students")
+    .select("*");
+
+  let attendanceData: any[] = [];
+
+  // ✅ 4. GET ATTENDANCE ONLY FOR TODAY
+  if (session) {
+    const { data } = await supabase
+      .from("attendance")
+      .select("*")
+      .eq("session_id", session.id); // 🔥 THIS IS THE FIX
+
+    attendanceData = data || [];
+  }
+
+  // ✅ 5. SET STATE
+  setParticipants(studentsData || []);
+  setAttendance(attendanceData);
+};
 
 useEffect(() => {
   // 🔥 load data ONCE when component mounts
@@ -70,7 +98,7 @@ useEffect(() => {
   return () => {
     supabase.removeChannel(channel);
   };
-}, []);
+}, [selectedDate]); // 🔥 DEPENDENCY ON selectedDate TO RELOAD WHEN DATE CHANGES
 
 const handleDownloadQR = async (record: any) => {
   try {
@@ -190,13 +218,16 @@ if (currentPage === "register") {
   );
 }
 
+const isToday = selectedDate === todayDate;
+
 if (currentPage === "scanner") {
-  return (
-    <QRScannerPage
-      currentPage={currentPage}
-      setCurrentPage={setCurrentPage}
-    />
-  );
+  if (!isToday) {
+    alert("Scanning is only allowed for today's session");
+    setCurrentPage("dashboard");
+    return null;
+  }
+
+  return <QRScannerPage />;
 }
 
 
@@ -219,6 +250,41 @@ if (currentPage === "scanner") {
         
 
         <SearchBar value={searchQuery} onChange={setSearchQuery} />
+       <div className="flex justify-between items-center mb-4">
+        <h2 className="text-lg font-semibold">Attendance</h2>
+
+        <div className="flex items-center gap-2">
+          
+          {/* 📅 Date Picker */}
+          <div className="flex items-center gap-2 bg-white border rounded-lg px-3 py-2">
+            <span>📅</span>
+            <input
+              type="date"
+              value={selectedDate}
+              onChange={(e) => setSelectedDate(e.target.value)}
+              className="outline-none"
+            />
+            {/* ✅ TODAY LABEL */}
+            {selectedDate === todayDate && (
+              <span className="text-green-600 text-sm font-medium">
+                ● Today
+              </span>
+            )}
+          </div>
+
+          {/* 🔥 Back to Today Button */}
+          {selectedDate !== todayDate && (
+            <button
+              onClick={() => setSelectedDate(todayDate)}
+              className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm"
+            >
+              Back to Today
+            </button>
+          )}
+          
+
+        </div>
+</div>
         
         {activeTab === "attendance" ? (
           <>
