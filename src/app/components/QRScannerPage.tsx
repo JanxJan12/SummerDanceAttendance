@@ -19,6 +19,7 @@ export default function QRScannerPage() {
   const [manualId, setManualId] = useState('');
   const [showManualInput, setShowManualInput] = useState(false);
   const codeReaderRef = useRef<BrowserMultiFormatReader | null>(null);
+  const [scanLock, setScanLock] = useState(false);
 
   useEffect(() => {
     startScanning();
@@ -81,70 +82,54 @@ await codeReader.decodeFromVideoDevice(
     setScanning(false);
   };
 
+
+
+
+  
 const handleScan = async (data: string) => {
+  // 🔥 PREVENT MULTIPLE SCANS
+  if (scanLock) return;
+  setScanLock(true);
+
   console.log("SCANNED RAW:", data);
 
   try {
-    // ✅ 1. GET TODAY (FIX TIMEZONE)
+    // ✅ 1. GET TODAY
     const today = new Date().toLocaleDateString("en-CA");
 
-    // ✅ 2. GET OR CREATE SESSION
+    // ✅ 2. GET SESSION (NO AUTO CREATE)
     let { data: session, error } = await supabase
       .from("sessions")
       .select("*")
       .eq("session_date", today)
-      .maybeSingle(); // 🔥 IMPORTANT
+      .maybeSingle();
 
     if (error) {
       console.error("SESSION ERROR:", error);
+      throw new Error("Failed to fetch session");
     }
 
     if (!session) {
-      const { data: newSession, error: insertError } = await supabase
-        .from("sessions")
-        .insert([
-          {
-            session_name: `Session ${today}`,
-            session_date: today,
-          },
-        ])
-        .select()
-        .single();
-
-      if (insertError) {
-        console.error("CREATE SESSION ERROR:", insertError);
-        throw insertError;
-      }
-
-      session = newSession;
+      throw new Error("No active session for today");
     }
 
-// ✅ 3. HANDLE QR FORMAT (FINAL FIX)
+    // ✅ 3. PARSE QR
     let studentId;
 
     try {
       const parsed = JSON.parse(data);
-
-      if (typeof parsed === "object") {
-        studentId = parsed.id;
-      } else {
-        studentId = parsed;
-      }
+      studentId = typeof parsed === "object" ? parsed.id : parsed;
     } catch {
       studentId = data;
     }
 
-    // 🔥 IMPORTANT: force number
     studentId = Number(studentId);
 
-    // 🔥 validate
     if (!studentId) {
       throw new Error("Invalid QR");
     }
 
-console.log("FINAL STUDENT ID:", studentId);
-
-    console.log("STUDENT ID:", studentId);
+    console.log("FINAL STUDENT ID:", studentId);
 
     // ✅ 4. CHECK DUPLICATE
     const { data: existing } = await supabase
@@ -152,14 +137,14 @@ console.log("FINAL STUDENT ID:", studentId);
       .select("*")
       .eq("student_id", studentId)
       .eq("session_id", session.id)
-      .maybeSingle(); // 🔥 IMPORTANT
+      .maybeSingle();
 
     if (existing) {
       throw new Error("Already scanned");
     }
 
     // ✅ 5. INSERT ATTENDANCE
-    const { error: insertAttendanceError } = await supabase
+    const { error: insertError } = await supabase
       .from("attendance")
       .insert([
         {
@@ -168,8 +153,8 @@ console.log("FINAL STUDENT ID:", studentId);
         },
       ]);
 
-    if (insertAttendanceError) {
-      throw insertAttendanceError;
+    if (insertError) {
+      throw insertError;
     }
 
     // ✅ 6. SUCCESS UI
@@ -183,26 +168,41 @@ console.log("FINAL STUDENT ID:", studentId);
       status: "success",
     };
 
+    // 🔥 vibration feedback
+    if (navigator.vibrate) {
+      navigator.vibrate(100);
+    }
+
     setScanResult(result);
     setRecentScans((prev) => [result, ...prev.slice(0, 9)]);
-    setTimeout(() => setScanResult(null), 3000);
+
+    // 🔓 UNLOCK AFTER DELAY
+    setTimeout(() => {
+      setScanResult(null);
+      setScanLock(false);
+    }, 2000);
 
   } catch (err: any) {
-  console.error("FULL ERROR:", err);
+    console.error("FULL ERROR:", err);
 
-  const errorResult = {
-    id: Date.now().toString(),
-    name: err.message || "Unknown error",
-    time: new Date().toLocaleTimeString("en-US", {
-      hour: "2-digit",
-      minute: "2-digit",
-    }),
-    status: "error",
-  } as ScanResult;
+    const errorResult: ScanResult = {
+      id: Date.now().toString(),
+      name: err.message || "Unknown error",
+      time: new Date().toLocaleTimeString("en-US", {
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
+      status: "error",
+    };
 
-  setScanResult(errorResult);
-  setTimeout(() => setScanResult(null), 3000);
-}
+    setScanResult(errorResult);
+
+    // 🔓 UNLOCK EVEN ON ERROR
+    setTimeout(() => {
+      setScanResult(null);
+      setScanLock(false);
+    }, 2000);
+  }
 };
   const handleManualSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -228,15 +228,22 @@ console.log("FINAL STUDENT ID:", studentId);
 
   return (
     <div className="min-h-screen bg-gray-900 flex flex-col">
-      <header className="bg-gray-800 border-b border-gray-700 px-4 sm:px-6 py-3 sm:py-4">
-        <h1 className="text-xl sm:text-2xl font-semibold text-white text-center">Attendance Scanner</h1>
-        <p className="text-gray-400 text-center text-xs sm:text-sm mt-1">Scan participant QR code</p>
-      </header>
+        <header className="bg-gray-900 px-4 py-6 text-center">
+          <h1 className="text-2xl font-semibold text-white">
+            Scan QR Code
+          </h1>
+          <p className="text-gray-400 text-sm mt-1">
+            Align the code inside the frame
+          </p>
+        </header>
 
       <div className="flex-1 flex items-center justify-center p-4 sm:p-6">
-        <div className="w-full max-w-md">
+        <div className="w-full max-w-lg"> 
           <div className="relative">
-            <div className="aspect-square bg-black rounded-xl sm:rounded-2xl overflow-hidden relative">
+                    <div className="absolute top-3 left-1/2 -translate-x-1/2 bg-black/70 px-3 py-1 rounded-full text-xs text-white z-10">
+          {scanning ? "Scanning..." : "Camera Off"}
+        </div>
+            <div className="aspect-square bg-black rounded-2xl overflow-hidden relative shadow-xl">
               <video
                 ref={videoRef}
                 className="w-full h-full object-cover"
@@ -244,12 +251,25 @@ console.log("FINAL STUDENT ID:", studentId);
                 playsInline
                 muted
               />
+              <div className="absolute inset-0 bg-black/20"></div>
 
-              <div className="absolute inset-0 pointer-events-none">
-                <div className="absolute inset-0 border-2 sm:border-4 border-blue-500 rounded-xl sm:rounded-2xl m-4 sm:m-8 shadow-lg shadow-blue-500/50"></div>
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/80"></div>
+              <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
+                
+                {/* Scan Box */}
+              <div className="w-64 sm:w-72 h-64 sm:h-72 border-2 border-blue-400 rounded-3xl relative shadow-[0_0_20px_rgba(59,130,246,0.4)]">
+
+                {/* Corner accents */}
+                <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-white rounded-tl-xl"></div>
+                <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-white rounded-tr-xl"></div>
+                <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-white rounded-bl-xl"></div>
+                <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-white rounded-br-xl"></div>
+
+                {/* Smooth scanning line */}
+                <div className="absolute left-0 w-full h-1 bg-blue-400 animate-[scan_2s_linear_infinite]"></div>
+
               </div>
 
+              </div>
               {!scanning && (
                 <div className="absolute inset-0 flex items-center justify-center bg-gray-800">
                   <div className="text-center">

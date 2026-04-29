@@ -95,6 +95,13 @@ useEffect(() => {
         loadData(); // refresh on edit/delete
       }
     )
+          .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "sessions" },
+        () => {
+          loadData(); // 🔥 refresh when session is created/deleted
+        }
+      )
 
     .subscribe();
 
@@ -117,6 +124,23 @@ const handleDownloadQR = async (record: any) => {
     console.error(err);
   }
 };
+
+const handleCreateSession = async () => {
+  try {
+    await supabase.from("sessions").insert([
+      {
+        session_name: `Session ${todayDate}`,
+        session_date: todayDate,
+      },
+    ]);
+
+    loadData(); // 🔥 refresh UI after creating
+  } catch (err) {
+    console.error("Create session error:", err);
+  }
+};
+
+
   // ✅ MATCH AttendanceTable TYPE EXACTLY
   const attendanceRecords: AttendanceRecord[] = participants.map((student) => {
     const record = attendance.find(
@@ -280,6 +304,15 @@ if (currentPage === "scanner") {
                       ● Today
                     </span>
                   )}
+                  {/* 🟢 Start Session Button (ONLY TODAY + NO SESSION) */}
+                  {selectedDate === todayDate && !session && (
+                    <button
+                      onClick={handleCreateSession}
+                      className="px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm"
+                    >
+                      Start Session
+                    </button>
+                  )}
                 </div>
 
                 {/* 🔥 Back to Today */}
@@ -305,7 +338,9 @@ if (currentPage === "scanner") {
           {/* ❌ NO SESSION */}
           {!session && (
             <div className="bg-yellow-100 text-yellow-800 p-4 rounded-lg text-center">
-              There is no attendance record on this day
+              {selectedDate === todayDate
+                ? "No session yet. Start today's session to begin attendance."
+                : "There is no attendance record on this day"}
             </div>
           )}
 
