@@ -17,13 +17,10 @@ import QRModal from "./components/QRModal";
 export default function App()  { 
   
   const [currentPage, setCurrentPage] = useState<
-  "dashboard" | "register" | "scanner"
->("dashboard");
+  "dashboard" | "register" | "scanner">("dashboard");
   
   const [activeTab, setActiveTab] = useState<"attendance" | "participants">(
-    "attendance"
-    
-  );
+    "attendance");
 
 
   const [participants, setParticipants] = useState<any[]>([]);  
@@ -37,6 +34,7 @@ export default function App()  {
   const [editingParticipant, setEditingParticipant] = useState<any | null>(null);
   const [qrData, setQrData] = useState<any | null>(null);
 
+  const [isEditingSession, setIsEditingSession] = useState(false); 
   const [lateTime, setLateTime] = useState("");
   const [cutoffTime, setCutoffTime] = useState("");
 
@@ -233,7 +231,7 @@ const handleSaveParticipant = async (updated: any) => {
 };
 
 const handleSaveSessionSettings = async () => {
-  if (!session) return;
+  if (!session) return; 
 
   await supabase
     .from("sessions")
@@ -243,8 +241,20 @@ const handleSaveSessionSettings = async () => {
     })
     .eq("id", session.id);
 
-  alert("Session settings updated");
+  // ✅ EXIT EDIT MODE
+  setIsEditingSession(false);
+
+  // ✅ REFRESH DATA
   loadData();
+};
+
+const formatTime = (time: string) => {
+  if (!time) return "-";
+
+  return new Date(`1970-01-01T${time}`).toLocaleTimeString("en-US", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 };
 
   // ✅ QR (NOW MATCHES AttendanceRecord)
@@ -366,49 +376,81 @@ if (currentPage === "scanner") {
           />
           {/* ✅ SESSION SETTINGS (ONLY TODAY + HAS SESSION) */}
 {session && isToday && (
-  <div className="bg-white p-4 rounded-lg shadow mt-4">
-    <h3 className="text-sm font-semibold text-gray-700 mb-3">
-      Session Settings
-    </h3>
+<div className="bg-white rounded-xl p-4 shadow-sm border space-y-4">
 
-    <div className="flex flex-col sm:flex-row gap-4 items-end">
+  <h3 className="font-semibold text-gray-700">Session Settings</h3>
 
-      {/* Late Time */}
-      <div className="flex flex-col">
-        <label className="text-xs text-gray-500 mb-1">
-          Late Time
-        </label>
+  {!isEditingSession ? (
+    // ✅ VIEW MODE
+    <div className="flex items-center justify-between">
+
+        <div className="space-y-2">
+
+          <p className="text-sm text-gray-500">
+            Late Time:
+            <span className="ml-2 font-semibold text-yellow-600">
+              {formatTime(lateTime)}
+            </span>
+          </p>
+
+          <p className="text-sm text-gray-500">
+            Cutoff Time:
+            <span className="ml-2 font-semibold text-red-600">
+              {formatTime(cutoffTime)}
+            </span>
+          </p>
+
+        </div>
+
+        <button
+          onClick={() => setIsEditingSession(true)}
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm"
+        >
+          Edit Session
+        </button>
+
+      </div>
+
+  ) : (
+    // ✏️ EDIT MODE
+    <div className="flex flex-wrap items-end gap-3">
+      
+      <div>
+        <label className="text-xs text-gray-500">Late Time</label>
         <input
           type="time"
           value={lateTime}
           onChange={(e) => setLateTime(e.target.value)}
-          className="border rounded px-3 py-2 text-sm"
+          className="block border rounded-lg px-3 py-2 mt-1"
         />
       </div>
 
-      {/* Cutoff Time */}
-      <div className="flex flex-col">
-        <label className="text-xs text-gray-500 mb-1">
-          Cutoff Time
-        </label>
+      <div>
+        <label className="text-xs text-gray-500">Cutoff Time</label>
         <input
           type="time"
           value={cutoffTime}
           onChange={(e) => setCutoffTime(e.target.value)}
-          className="border rounded px-3 py-2 text-sm"
+          className="block border rounded-lg px-3 py-2 mt-1"
         />
       </div>
 
-      {/* Save Button */}
       <button
         onClick={handleSaveSessionSettings}
-        className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700"
+        className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm"
       >
         Save
       </button>
 
+      <button
+        onClick={() => setIsEditingSession(false)}
+        className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg text-sm"
+      >
+        Cancel
+      </button>
     </div>
-  </div>
+  )}
+</div>
 )}
 
           {/* ❌ NO SESSION */}
