@@ -3,6 +3,7 @@ import { BrowserMultiFormatReader } from '@zxing/browser';
 import { CheckCircle, XCircle, Camera, Keyboard } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import {supabase } from '../../lib/supabase';
+import Navigation from "./Navigation";
 
 interface ScanResult {
   id: string;
@@ -11,7 +12,15 @@ interface ScanResult {
   status: 'success' | 'error';
 }
 
-export default function QRScannerPage() {
+export default function QRScannerPage({
+  currentPage,
+  setCurrentPage,
+  selectedPeriod,
+}: {
+  currentPage: "dashboard" | "register" | "scanner";
+  setCurrentPage: (page: "dashboard" | "register" | "scanner") => void;
+  selectedPeriod: "Morning" | "Afternoon";
+}) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [scanning, setScanning] = useState(false);
   const [scanResult, setScanResult] = useState<ScanResult | null>(null);
@@ -75,12 +84,27 @@ await codeReader.decodeFromVideoDevice(
     }
   };
 
-  const stopScanning = () => {
-    if (codeReaderRef.current) {
-      (codeReaderRef.current as any).reset();
+const stopScanning = () => {
+  try {
+    // stop camera tracks
+    if (videoRef.current?.srcObject) {
+      const stream = videoRef.current.srcObject as MediaStream;
+      stream.getTracks().forEach((track) => track.stop());
+      videoRef.current.srcObject = null;
     }
+
+    // safely stop ZXing if method exists
+    const reader: any = codeReaderRef.current;
+    if (reader?.reset) {
+      reader.reset();
+    }
+
+    codeReaderRef.current = null;
     setScanning(false);
-  };
+  } catch (err) {
+    console.error("Stop scanner error:", err);
+  }
+};
 
 
 
@@ -98,11 +122,12 @@ const handleScan = async (data: string) => {
     const today = new Date().toLocaleDateString("en-CA");
 
     // ✅ 2. GET SESSION (NO AUTO CREATE)
-    let { data: session, error } = await supabase
-      .from("sessions")
-      .select("*")
-      .eq("session_date", today)
-      .maybeSingle();
+  let { data: session, error } = await supabase
+    .from("sessions")
+    .select("*")
+    .eq("session_date", today)
+    .eq("session_period", selectedPeriod)
+    .maybeSingle();
 
     if (error) {
       console.error("SESSION ERROR:", error);
@@ -250,7 +275,42 @@ if (navigator.vibrate) {
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 flex flex-col">
+        <div className="min-h-screen bg-gray-900 flex flex-col">
+          <div className="bg-gray-900 border-b border-gray-800 px-4 py-4">
+  <div className="max-w-3xl mx-auto flex justify-center gap-3">
+    <button
+      onClick={() => setCurrentPage("dashboard")}
+      className={`px-4 py-2 rounded-xl text-sm font-medium transition ${
+        currentPage === "dashboard"
+          ? "bg-blue-600 text-white"
+          : "text-gray-300 hover:bg-gray-800"
+      }`}
+    >
+      Dashboard
+    </button>
+
+    <button
+      onClick={() => setCurrentPage("register")}
+      className={`px-4 py-2 rounded-xl text-sm font-medium transition ${
+        currentPage === "register"
+          ? "bg-blue-600 text-white"
+          : "text-gray-300 hover:bg-gray-800"
+      }`}
+    >
+      Register
+    </button>
+
+    <button
+      onClick={() => setCurrentPage("scanner")}
+      className="px-4 py-2 rounded-xl text-sm font-medium bg-blue-600 text-white"
+    >
+      Scanner
+    </button>
+  </div>
+</div>
+
+
+      
         <header className="bg-gray-900 px-4 py-6 text-center">
           <h1 className="text-2xl font-semibold text-white">
             Scan QR Code

@@ -65,22 +65,6 @@ export default function AttendanceTable({
 
                 <td className="px-4 py-3">
                   <div className="flex gap-2">
-                    
-                    {/* 🔵 SHOW QR */}
-                    <button
-                      onClick={() => onShowQR(record)}
-                      className="p-2 bg-blue-100 text-blue-600 rounded"
-                    >
-                      <QrCode size={16} />
-                    </button>
-
-                    {/* 🟢 DOWNLOAD QR */}
-                    <button
-                      onClick={() => onDownloadQR(record)}
-                      className="p-2 bg-green-100 text-green-600 rounded"
-                    >
-                      <Download size={16} />
-                    </button>
 
                   </div>
                 </td>

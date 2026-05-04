@@ -26,9 +26,12 @@ export default function App()  {
   const [participants, setParticipants] = useState<any[]>([]);  
   const [attendance, setAttendance] = useState<any[]>([]);
   const [session, setSession] = useState<any | null>(null);
+  const [morningSession, setMorningSession] = useState<any | null>(null);
+  const [afternoonSession, setAfternoonSession] = useState<any | null>(null);
   const todayDate: string = new Date().toLocaleDateString("en-CA");
 
   const [selectedDate, setSelectedDate] = useState(todayDate);
+  const [selectedPeriod, setSelectedPeriod] = useState<"Morning" | "Afternoon">("Morning");
   const [searchQuery, setSearchQuery] = useState("");
 
   const [editingParticipant, setEditingParticipant] = useState<any | null>(null);
@@ -37,42 +40,63 @@ export default function App()  {
   const [isEditingSession, setIsEditingSession] = useState(false); 
   const [lateTime, setLateTime] = useState("");
   const [cutoffTime, setCutoffTime] = useState("");
+  const [statusFilter, setStatusFilter] = useState<
+  "All" | "Present" | "Late" | "Absent"
+>("All");
+
 
   // ✅ LOAD DATA
 const loadData = async () => {
   // ✅ 1. GET TODAY
   const today = selectedDate;
-
-  // ✅ 2. GET TODAY'S SESSION
-const { data: sessionData } = await supabase
+  // ✅ GET ALL SESSIONS TODAY
+const { data: sessionsData } = await supabase
   .from("sessions")
   .select("*")
-  .eq("session_date", today)
-  .maybeSingle();
+  .eq("session_date", today);
 
-setSession(sessionData);
+// ✅ SPLIT INTO MORNING / AFTERNOON
+const morning = sessionsData?.find(s => s.session_period === "Morning");
+const afternoon = sessionsData?.find(s => s.session_period === "Afternoon");
 
-if (sessionData) {
-  setLateTime(sessionData.late_time || "");
-  setCutoffTime(sessionData.cutoff_time || "");
+// ✅ SAVE THEM
+setMorningSession(morning || null);
+setAfternoonSession(afternoon || null);
+
+// ✅ SET CURRENT SESSION BASED ON SELECTED PERIOD
+const current =
+  selectedPeriod === "Morning" ? morning : afternoon;
+
+setSession(current || null);
+
+// ✅ LOAD SETTINGS
+if (current) {
+  setLateTime(current.late_time || "");
+  setCutoffTime(current.cutoff_time || "");
+} else {
+  setLateTime("");
+  setCutoffTime("");
 }
 
+
   // ✅ 3. GET STUDENTS
-  const { data: studentsData } = await supabase
-    .from("students")
-    .select("*");
+const { data: studentsData } = await supabase
+  .from("students")
+  .select("*")
+  .order("last_name", { ascending: true })
+  .order("first_name", { ascending: true });
 
   let attendanceData: any[] = [];
 
   // ✅ 4. GET ATTENDANCE ONLY FOR TODAY
-  if (sessionData) {
-    const { data } = await supabase
-      .from("attendance")
-      .select("*")
-      .eq("session_id", sessionData.id); // 🔥 THIS IS THE FIX
+if (current) {
+  const { data } = await supabase
+    .from("attendance")
+    .select("*")
+    .eq("session_id", current.id);
 
-    attendanceData = data || [];
-  }
+  attendanceData = data || [];
+}
 
   // ✅ 5. SET STATE
   setParticipants(studentsData || []);
@@ -114,33 +138,48 @@ useEffect(() => {
   return () => {
     supabase.removeChannel(channel);
   };
-}, [selectedDate]); // 🔥 DEPENDENCY ON selectedDate TO RELOAD WHEN DATE CHANGES
+}, [selectedDate, selectedPeriod]);// 🔥 DEPENDENCY ON selectedDate TO RELOAD WHEN DATE CHANGES
 
 const handleDownloadQR = async (record: any) => {
   try {
-    const url = await toDataURL(record.id, {
-      width: 200,
+    const fullName =
+      record.name ||
+      `${record.first_name || ""} ${record.last_name || ""}`.trim();
+
+    const url = await toDataURL(record.id.toString(), {
+      width: 300,
     });
 
     const link = document.createElement("a");
     link.href = url;
-    link.download = `${record.name}-qr.png`;
+    link.download = `${fullName || "participant"}-qr.png`;
+    document.body.appendChild(link);
     link.click();
+    document.body.removeChild(link);
   } catch (err) {
-    console.error(err);
+    console.error("QR download error:", err);
   }
 };
 
 const handleCreateSession = async () => {
   try {
-    await supabase.from("sessions").insert([
+    const { error } = await supabase.from("sessions").insert([
       {
-        session_name: `Session ${todayDate}`,
-        session_date: todayDate,
+        session_name: `${selectedPeriod} Session ${selectedDate}`,
+        session_date: selectedDate,
+        session_period: selectedPeriod,
+        late_time: null,
+        cutoff_time: null,
       },
     ]);
 
-    loadData(); // 🔥 refresh UI after creating
+    if (error) {
+      console.error("Create session error:", error);
+      alert(error.message);
+      return;
+    }
+
+    await loadData();
   } catch (err) {
     console.error("Create session error:", err);
   }
@@ -177,9 +216,15 @@ const handleCreateSession = async () => {
   });
 
   // ✅ FILTER ATTENDANCE
-  const filteredAttendance = attendanceRecords.filter((r) =>
-    r.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+const filteredAttendance = attendanceRecords.filter((r) => {
+  const matchesSearch = r.name
+    .toLowerCase()
+    .includes(searchQuery.toLowerCase());
+
+  const matchesStatus = statusFilter === "All" || r.status === statusFilter;
+
+  return matchesSearch && matchesStatus;
+});
 
   // ✅ FILTER PARTICIPANTS
   const filteredParticipants = participants.filter(
@@ -200,7 +245,6 @@ const handleCreateSession = async () => {
   const absentCount = attendanceRecords.filter(
     (r) => r.status === "Absent"
   ).length;
-
   // ✅ DELETE
   const handleDeleteParticipant = async (id: number) => {
     if (!confirm("Delete this participant?")) return;
@@ -286,14 +330,33 @@ if (currentPage === "register") {
 
 const isToday = selectedDate === todayDate;
 
-if (currentPage === "scanner") {
-  if (!isToday) {
-    alert("Scanning is only allowed for today's session");
-    setCurrentPage("dashboard");
-    return null;
-  }
+if (currentPage === "scanner" && !isToday) {
+  return (
+    <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+      <div className="bg-white p-6 rounded-xl shadow text-center space-y-4">
+        <p className="text-red-600 font-semibold">
+          Scanning is only allowed for today's session.
+        </p>
 
-  return <QRScannerPage />;
+        <button
+          onClick={() => setCurrentPage("dashboard")}
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg"
+        >
+          Back to Dashboard
+        </button>
+      </div>
+    </div>
+  );
+}
+
+if (currentPage === "scanner") {
+  return (
+    <QRScannerPage
+      currentPage={currentPage}
+      setCurrentPage={setCurrentPage}
+      selectedPeriod={selectedPeriod}
+    />
+  );
 }
 
 
@@ -344,14 +407,27 @@ if (currentPage === "scanner") {
                     </span>
                   )}
                   {/* 🟢 Start Session Button (ONLY TODAY + NO SESSION) */}
-                  {selectedDate === todayDate && !session && (
+                  {selectedDate === todayDate &&
+                  ((selectedPeriod === "Morning" && !morningSession) ||
+                  (selectedPeriod === "Afternoon" && !afternoonSession)) && (
                     <button
                       onClick={handleCreateSession}
                       className="px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm"
                     >
-                      Start Session
+                      Start {selectedPeriod} Session
                     </button>
                   )}
+
+                  <select
+                  value={selectedPeriod}
+                  onChange={(e) =>
+                    setSelectedPeriod(e.target.value as "Morning" | "Afternoon")
+                  }
+                  className="bg-white border rounded-lg px-3 py-2 outline-none text-sm"
+                >
+                  <option value="Morning">Morning</option>
+                  <option value="Afternoon">Afternoon</option>
+                </select>
                 </div>
 
                 {/* 🔥 Back to Today */}
@@ -370,10 +446,13 @@ if (currentPage === "scanner") {
           
       {activeTab === "attendance" ? (
         <>
-          <StatsCards
-            presentCount={presentCount}
-            absentCount={absentCount}
-          />
+      <StatsCards
+        presentCount={presentCount}
+        lateCount={lateCount}
+        absentCount={absentCount}
+        statusFilter={statusFilter}
+        onStatusFilter={setStatusFilter}
+      />
           {/* ✅ SESSION SETTINGS (ONLY TODAY + HAS SESSION) */}
 {session && isToday && (
 <div className="bg-white rounded-xl p-4 shadow-sm border space-y-4">
@@ -487,8 +566,9 @@ if (currentPage === "scanner") {
             course: p.course,
             gradeYear: p.grade_year,
               })}
-            onDelete={(participant: any) => handleDeleteParticipant(participant.id)}
+            onDelete={(id: string) => handleDeleteParticipant(Number(id))}
             onShowQR={handleShowQR}
+            onDownloadQR={handleDownloadQR}
           />
         )}
       </main>

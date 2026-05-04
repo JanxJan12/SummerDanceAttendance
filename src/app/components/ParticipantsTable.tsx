@@ -1,4 +1,5 @@
-import { QrCode, Edit, Trash2 } from 'lucide-react';
+import { QrCode, Edit, Trash2, Download} from 'lucide-react';
+
 
 interface Participant {
   id: string;
@@ -18,12 +19,19 @@ interface ParticipantsTableProps {
   onEdit: (participant: Participant) => void;
   onDelete: (id: string) => void;
   onShowQR: (participant: Participant) => void;
+  onDownloadQR: (participant: Participant) => void;
 }
-export default function ParticipantsTable({ participants, onEdit, onDelete, onShowQR }: ParticipantsTableProps) {
+export default function ParticipantsTable({
+  participants,
+  onEdit,
+  onDelete,
+  onShowQR,
+  onDownloadQR,
+}: ParticipantsTableProps) {
   return (
     <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[900px]">
+        <table className="w-full min-w-[1250px]">
           <thead>
             <tr className="bg-gray-50 border-b border-gray-200">
               <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-semibold text-gray-700">First Name</th>
@@ -35,12 +43,12 @@ export default function ParticipantsTable({ participants, onEdit, onDelete, onSh
               <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-semibold text-gray-700">School</th>
               <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-semibold text-gray-700">Course/ Strand</th>
               <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-semibold text-gray-700">Grade/ Year</th>
-              <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-semibold text-gray-700">Action</th>
+              <th className="sticky right-0 z-20 bg-gray-50 px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-semibold text-gray-700 min-w-[220px]">Action</th>
             </tr>
           </thead>
           <tbody>
             {participants.map((participant) => (
-              <tr key={participant.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+              <tr key={participant.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors group">
                 <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-gray-900">{participant.first_name}</td>
                 <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-gray-900">{participant.last_name}</td>
                 <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-gray-700">{participant.middle_initial || '-'}</td>
@@ -50,8 +58,8 @@ export default function ParticipantsTable({ participants, onEdit, onDelete, onSh
                 <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-gray-700 max-w-[150px] truncate" title={participant.school || '-'}>{participant.school || '-'}</td>
                 <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-gray-700 max-w-[120px] truncate" title={participant.course || '-'}>{participant.course || '-'}</td>
                 <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-gray-700">{participant.grade_year || '-'}</td>
-                <td className="px-3 sm:px-6 py-3 sm:py-4">
-                  <div className="flex gap-1.5 sm:gap-2"> 
+                <td className="sticky right-0 z-10 bg-white px-3 sm:px-6 py-3 sm:py-4 min-w-[220px]">
+                  <div className="flex gap-2 flex-nowrap min-w-[180px]">
                     <button
                       onClick={() => onShowQR(participant)}
                       className="p-1.5 sm:p-2 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 transition-colors"
@@ -59,6 +67,14 @@ export default function ParticipantsTable({ participants, onEdit, onDelete, onSh
                     >
                       <QrCode size={14} className="sm:w-4 sm:h-4" />
                     </button>
+                    <button
+                      onClick={() => onDownloadQR(participant)}
+                      className="p-1.5 sm:p-2 bg-green-100 text-green-600 rounded-lg hover:bg-green-200 transition-colors"
+                      title="Download QR Code"
+                    >
+                      <Download size={14} className="sm:w-4 sm:h-4" />
+                    </button>
+
                     <button
                       onClick={() => onEdit(participant)}
                       className="p-1.5 sm:p-2 bg-yellow-100 text-yellow-600 rounded-lg hover:bg-yellow-200 transition-colors"
