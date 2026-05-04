@@ -22,10 +22,11 @@ export default function App()  {
   const [activeTab, setActiveTab] = useState<"attendance" | "participants">(
     "attendance");
 
-
+  const [sessionError, setSessionError] = useState<string | null>(null);
   const [participants, setParticipants] = useState<any[]>([]);  
   const [attendance, setAttendance] = useState<any[]>([]);
   const [session, setSession] = useState<any | null>(null);
+  const [participantToDelete, setParticipantToDelete] = useState<any | null>(null);
   const [morningSession, setMorningSession] = useState<any | null>(null);
   const [afternoonSession, setAfternoonSession] = useState<any | null>(null);
   const todayDate: string = new Date().toLocaleDateString("en-CA");
@@ -246,12 +247,12 @@ const filteredAttendance = attendanceRecords.filter((r) => {
     (r) => r.status === "Absent"
   ).length;
   // ✅ DELETE
-  const handleDeleteParticipant = async (id: number) => {
-    if (!confirm("Delete this participant?")) return;
+      const handleDeleteParticipant = async (id: number) => {
+        await supabase.from("students").delete().eq("id", id);
 
-    await supabase.from("students").delete().eq("id", id);
-    loadData();
-  };
+        setParticipantToDelete(null);
+        loadData();
+      };
 
   // ✅ EDIT SAVE
 const handleSaveParticipant = async (updated: any) => {
@@ -275,21 +276,60 @@ const handleSaveParticipant = async (updated: any) => {
 };
 
 const handleSaveSessionSettings = async () => {
-  if (!session) return; 
+  if (!session) return;
 
-  await supabase
-    .from("sessions")
-    .update({
-      late_time: lateTime,
-      cutoff_time: cutoffTime,
-    })
-    .eq("id", session.id);
+ setSessionError(null);
 
-  // ✅ EXIT EDIT MODE
-  setIsEditingSession(false);
+if (!lateTime || !cutoffTime) {
+  setSessionError("Please set both late time and cutoff time.");
+  return;
+}
 
-  // ✅ REFRESH DATA
+if (selectedPeriod === "Morning") {
+  if (lateTime >= "12:00" || cutoffTime >= "12:00") {
+    setSessionError("Morning session must be before 12:00 PM.");
+    return;
+  }
+}
+
+if (selectedPeriod === "Afternoon") {
+  if (lateTime < "12:00" || cutoffTime < "12:00") {
+    setSessionError("Afternoon session must be 12:00 PM or later.");
+    return;
+  }
+}
+
+if (lateTime >= cutoffTime) {
+  setSessionError("Late time must be earlier than cutoff time.");
+  return;
+}
+
+const { error } = await supabase
+  .from("sessions")
+  .update({
+    late_time: lateTime,
+    cutoff_time: cutoffTime,
+  })
+  .eq("id", session.id);
+
+if (error) {
+  setSessionError("Failed to save settings.");
+  return;
+}
+
+// ✅ update local session immediately
+setSession({
+  ...session,
+  late_time: lateTime,
+  cutoff_time: cutoffTime,
+});
+
+setIsEditingSession(false);
+
+// 🔥 OPTIONAL: delay loadData to sync
+setTimeout(() => {
   loadData();
+}, 300);
 };
 
 const formatTime = (time: string) => {
@@ -418,16 +458,31 @@ if (currentPage === "scanner") {
                     </button>
                   )}
 
-                  <select
-                  value={selectedPeriod}
-                  onChange={(e) =>
-                    setSelectedPeriod(e.target.value as "Morning" | "Afternoon")
-                  }
-                  className="bg-white border rounded-lg px-3 py-2 outline-none text-sm"
-                >
-                  <option value="Morning">Morning</option>
-                  <option value="Afternoon">Afternoon</option>
-                </select>
+                <div className="flex bg-gray-100 rounded-xl p-1 border">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedPeriod("Morning")}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
+                      selectedPeriod === "Morning"
+                        ? "bg-white text-blue-600 shadow-sm"
+                        : "text-gray-500 hover:text-gray-700"
+                    }`}
+                  >
+                    Morning
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setSelectedPeriod("Afternoon")}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
+                      selectedPeriod === "Afternoon"
+                        ? "bg-white text-blue-600 shadow-sm"
+                        : "text-gray-500 hover:text-gray-700"
+                    }`}
+                  >
+                    Afternoon
+                  </button>
+                </div>
                 </div>
 
                 {/* 🔥 Back to Today */}
@@ -455,9 +510,19 @@ if (currentPage === "scanner") {
       />
           {/* ✅ SESSION SETTINGS (ONLY TODAY + HAS SESSION) */}
 {session && isToday && (
-<div className="bg-white rounded-xl p-4 shadow-sm border space-y-4">
+<div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 space-y-4">
 
-  <h3 className="font-semibold text-gray-700">Session Settings</h3>
+  <div>
+  <h3 className="font-semibold text-gray-800">Session Settings</h3> 
+  <p className="text-sm text-gray-500">
+    Manage late and cutoff times for Morning and Afternoon sessions.
+  </p>
+</div>
+  {isEditingSession && (
+    <div className="inline-flex items-center px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-medium">
+      Editing: {selectedPeriod}
+    </div>
+  )}
 
   {!isEditingSession ? (
     // ✅ VIEW MODE
@@ -492,42 +557,71 @@ if (currentPage === "scanner") {
 
   ) : (
     // ✏️ EDIT MODE
-    <div className="flex flex-wrap items-end gap-3">
-      
-      <div>
-        <label className="text-xs text-gray-500">Late Time</label>
-        <input
-          type="time"
-          value={lateTime}
-          onChange={(e) => setLateTime(e.target.value)}
-          className="block border rounded-lg px-3 py-2 mt-1"
-        />
-      </div>
-
-      <div>
-        <label className="text-xs text-gray-500">Cutoff Time</label>
-        <input
-          type="time"
-          value={cutoffTime}
-          onChange={(e) => setCutoffTime(e.target.value)}
-          className="block border rounded-lg px-3 py-2 mt-1"
-        />
-      </div>
-
-      <button
-        onClick={handleSaveSessionSettings}
-        className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm"
-      >
-        Save
-      </button>
-
-      <button
-        onClick={() => setIsEditingSession(false)}
-        className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg text-sm"
-      >
-        Cancel
-      </button>
+<div className="space-y-3">
+  
+  {/* ROW: inputs + buttons */}
+  <div className="flex flex-wrap items-end gap-3">
+    
+    <div>
+      <label className="text-xs text-gray-500">Late Time</label>
+      <input
+        type="time"
+        value={lateTime}
+        min={selectedPeriod === "Morning" ? "00:00" : "12:00"}
+        max={selectedPeriod === "Morning" ? "11:59" : "23:59"}
+        onChange={(e) => {
+          setLateTime(e.target.value);
+          setSessionError(null);
+        }}
+        className="block border rounded-lg px-3 py-2 mt-1"
+      />
     </div>
+
+    <div>
+      <label className="text-xs text-gray-500">Cutoff Time</label>
+      <input
+        type="time"
+        value={cutoffTime}
+        min={selectedPeriod === "Morning" ? "00:00" : "12:00"}
+        max={selectedPeriod === "Morning" ? "11:59" : "23:59"}
+        onChange={(e) => {
+          setCutoffTime(e.target.value);
+          setSessionError(null);
+        }}
+        className="block border rounded-lg px-3 py-2 mt-1"
+      />
+    </div>
+
+    <button
+      onClick={handleSaveSessionSettings}
+      className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm"
+    >
+      Save
+    </button>
+
+    <button
+      onClick={() => {
+        setLateTime(session?.late_time || "");
+        setCutoffTime(session?.cutoff_time || "");
+        setSessionError(null);
+        setIsEditingSession(false);
+      }}
+      className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg text-sm"
+    >
+      Cancel
+    </button>
+
+  </div>
+
+  {/* ERROR BELOW */}
+  {sessionError && (
+    <div className="rounded-lg bg-red-50 border border-red-200 px-3 py-2 text-sm text-red-600">
+      {sessionError}
+    </div>
+  )}
+
+</div>
+    
   )}
 </div>
 )}
@@ -566,7 +660,10 @@ if (currentPage === "scanner") {
             course: p.course,
             gradeYear: p.grade_year,
               })}
-            onDelete={(id: string) => handleDeleteParticipant(Number(id))}
+            onDelete={(id: string) => {
+            const participant = participants.find((p) => p.id === Number(id));
+            setParticipantToDelete(participant);
+          }}
             onShowQR={handleShowQR}
             onDownloadQR={handleDownloadQR}
           />
@@ -590,7 +687,43 @@ if (currentPage === "scanner") {
           onClose={() => setQrData(null)}
         />
       )}
+
+      {participantToDelete && (
+  <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+    <div className="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6">
+      <h2 className="text-lg font-semibold text-gray-900 mb-2">
+        Delete participant?
+      </h2>
+
+      <p className="text-sm text-gray-600 mb-6">
+        Are you sure you want to delete{" "}
+        <span className="font-semibold text-gray-900">
+          {participantToDelete.first_name} {participantToDelete.last_name}
+        </span>
+        ? This action cannot be undone.
+      </p>
+
+      <div className="flex gap-3 justify-end">
+        <button
+          onClick={() => setParticipantToDelete(null)}
+          className="px-4 py-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200"
+        >
+          Cancel
+        </button>
+
+        <button
+          onClick={() => handleDeleteParticipant(participantToDelete.id)}
+          className="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700"
+        >
+          Delete
+        </button>
+      </div>
     </div>
+  </div>
+)}
+    </div>
+
+    
   );
   
 }

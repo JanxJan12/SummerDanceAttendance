@@ -9,7 +9,8 @@ interface ScanResult {
   id: string;
   name: string;
   time: string;
-  status: 'success' | 'error';
+  status: "success" | "error";
+  attendanceStatus?: "Present" | "Late";
 }
 
 export default function QRScannerPage({
@@ -152,7 +153,7 @@ const handleScan = async (data: string) => {
     }
 
     // ⚠️ DETERMINE STATUS
-    let attendanceStatus = "Present";
+    let attendanceStatus: "Present" | "Late" = "Present";
 
     if (lateTime && currentTime > lateTime) {
       attendanceStatus = "Late";
@@ -206,12 +207,13 @@ const handleScan = async (data: string) => {
     // ✅ 6. SUCCESS UI
     const result: ScanResult = {
       id: studentId.toString(),
-      name: `${attendanceStatus} - Participant ${studentId}`,
+      name: `Participant ${studentId}`,
       time: new Date().toLocaleTimeString("en-US", {
         hour: "2-digit",
         minute: "2-digit",
       }),
       status: "success",
+      attendanceStatus,
     };
 
     // 🔥 vibration feedback
@@ -384,7 +386,9 @@ if (navigator.vibrate) {
                       )}
                       <h3 className="text-lg sm:text-xl font-semibold mb-1">{scanResult.name}</h3>
                       <p className="text-xs sm:text-sm opacity-90">
-                        {scanResult.status === 'success' ? 'Present' : 'Error'}
+                        {scanResult.status === "success"
+                          ? scanResult.attendanceStatus
+                          : "Error"}
                       </p>
                       <p className="text-xs sm:text-sm opacity-75 mt-2">{scanResult.time}</p>
                     </div>
@@ -469,7 +473,7 @@ if (navigator.vibrate) {
                       : 'bg-red-500/20 text-red-400'
                   }`}
                 >
-                  {scan.status === 'success' ? 'Present' : 'Error'}
+                  {scan.status === "success" ? scan.attendanceStatus : "Error"}
                 </span>
               </motion.div>
             ))}
