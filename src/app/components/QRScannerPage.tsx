@@ -178,8 +178,8 @@ if (!scannedCode) {
 const { data: student, error: studentError } = await supabase
   .from("students")
   .select("*")
-  .eq("student_code", scannedCode)
-  .maybeSingle();
+  .or(`student_code.eq.${scannedCode},id.eq.${scannedCode}`)
+  .maybeSingle(); 
 
 if (studentError) {
   console.error("STUDENT ERROR:", studentError);
@@ -187,7 +187,7 @@ if (studentError) {
 }
 
 if (!student) {
-  throw new Error("Student code not found");
+  throw new Error("Student not found");
 }
 
 studentId = student.id;
@@ -224,7 +224,7 @@ console.log("FINAL STUDENT ID:", studentId);
     // ✅ 6. SUCCESS UI
     const result: ScanResult = {
       id: studentId.toString(),
-      name: `Participant ${studentId}`,
+      name: `${student.first_name} ${student.last_name}`,
       time: new Date().toLocaleTimeString("en-US", {
         hour: "2-digit",
         minute: "2-digit",

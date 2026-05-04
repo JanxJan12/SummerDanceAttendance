@@ -83,10 +83,9 @@ export default function EditModal({ participant, onClose, onSave }: EditModalPro
                 className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all"
                 required
               >
-                <option value="13-15">13-15</option>
-                <option value="16-18">16-18</option>
-                <option value="19-21">19-21</option>
-                <option value="22-25">22-25</option>
+                <option value="Kids">6-7 | KIDS</option>
+                <option value="Teens">13-17 | TEENAGERS</option>
+                <option value="Adult">18+ | ADULTS</option>
               </select>
             </div>
 

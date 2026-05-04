@@ -29,10 +29,22 @@ export default function ParticipantsTable({
   onShowQR,
   onDownloadQR,
 }: ParticipantsTableProps) {
+  const getAgeBadgeClass = (ageGroup: string) => {
+  if (ageGroup === "Kids") return "bg-green-100 text-green-700";
+  if (ageGroup === "Teens") return "bg-blue-100 text-blue-700";
+  if (ageGroup === "Adult") return "bg-purple-100 text-purple-700";
+  return "bg-gray-100 text-gray-700";
+};
+
+const getGenderBadgeClass = (gender: string) => {
+  if (gender === "Male") return "bg-sky-100 text-sky-700";
+  if (gender === "Female") return "bg-pink-100 text-pink-700";
+  return "bg-gray-100 text-gray-700";
+};
   return (
     <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[1250px]">
+        <table className="w-full min-w-[900px]">
           <thead>
             <tr className="bg-gray-50 border-b border-gray-200">
               <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-semibold text-gray-700">First Name</th>
@@ -44,7 +56,7 @@ export default function ParticipantsTable({
               <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-semibold text-gray-700">School</th>
               <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-semibold text-gray-700">Course/ Strand</th>
               <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-semibold text-gray-700">Grade/ Year</th>
-              <th className="sticky right-0 z-20 bg-gray-50 px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-semibold text-gray-700 min-w-[220px]">Action</th>
+              <th className="sticky right-0 z-20 bg-gray-50 px-2 py-3 text-center text-xs font-semibold text-gray-700 w-[120px]">Action</th>
             </tr>
           </thead>
           <tbody>
@@ -53,14 +65,30 @@ export default function ParticipantsTable({
                 <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-gray-900">{participant.first_name}</td>
                 <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-gray-900">{participant.last_name}</td>
                 <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-gray-700">{participant.middle_initial || '-'}</td>
-                <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-gray-700">{participant.age_group}</td>
-                <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-gray-700">{participant.gender}</td>
+               <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm">
+                <span
+                  className={`px-2 py-1 rounded-full text-xs font-medium ${getAgeBadgeClass(
+                    participant.age_group
+                  )}`}
+                >
+                  {participant.age_group}
+                </span>
+              </td>
+                              <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm">
+                <span
+                  className={`px-2 py-1 rounded-full text-xs font-medium ${getGenderBadgeClass(
+                    participant.gender
+                  )}`}
+                >
+                  {participant.gender}
+                </span>
+              </td>
                 <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-gray-700">{participant.contact_number || '-'}</td>
                 <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-gray-700 max-w-[150px] truncate" title={participant.school || '-'}>{participant.school || '-'}</td>
                 <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-gray-700 max-w-[120px] truncate" title={participant.course || '-'}>{participant.course || '-'}</td>
                 <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-gray-700">{participant.grade_year || '-'}</td>
-                <td className="sticky right-0 z-10 bg-white px-3 sm:px-6 py-3 sm:py-4 min-w-[220px]">
-                  <div className="flex gap-2 flex-nowrap min-w-[180px]">
+                <td className="sticky right-0 z-10 bg-white px-2 py-3 w-[105px]">
+                  <div className="flex gap-1">
                     <button
                       onClick={() => onShowQR(participant)}
                       className="p-1.5 sm:p-2 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 transition-colors"

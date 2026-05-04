@@ -298,9 +298,9 @@ const handleDownloadQR = () => {
                     } focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all`}
                   >
                     <option value="">Select</option>
-                    <option value="6-7">6–7 | KIDS</option>
-                    <option value="13-17">13–17 | TEENAGERS</option>
-                    <option value="18+">18+ | ADULTS</option>
+                    <option value="Kids">6–7 | KIDS</option>
+                    <option value="Teens">13–17 | TEENAGERS</option>
+                    <option value="Adult">18+ | ADULTS</option>
                   </select>
                   {errors.ageGroup && <p className="text-xs text-red-500 mt-1">{errors.ageGroup}</p>}
                 </div>

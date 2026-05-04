@@ -147,9 +147,11 @@ const handleDownloadQR = async (record: any) => {
       record.name ||
       `${record.first_name || ""} ${record.last_name || ""}`.trim();
 
-    const url = await toDataURL(record.id.toString(), {
-      width: 300,
-    });
+const qrValue = record.student_code || record.id.toString();
+
+const url = await toDataURL(qrValue, {
+  width: 300,
+});
 
     const link = document.createElement("a");
     link.href = url;
@@ -709,8 +711,6 @@ const handleExportCSV = () => {
           {session && (
             <AttendanceTable
               records={filteredAttendance}
-              onShowQR={handleShowQR}
-              onDownloadQR={handleDownloadQR}
             />
           )}
         </>
