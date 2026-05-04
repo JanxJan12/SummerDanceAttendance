@@ -3,6 +3,7 @@ import { QrCode, Edit, Trash2, Download} from 'lucide-react';
 
 interface Participant {
   id: string;
+  student_code?: string;
   first_name: string;
   last_name: string;
   middle_initial: string | null;

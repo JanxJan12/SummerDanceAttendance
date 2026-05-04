@@ -33,7 +33,6 @@ export default function AttendanceTable({
               <th className="px-4 py-3 text-left text-sm">Gender</th>
               <th className="px-4 py-3 text-left text-sm">Status</th>
               <th className="px-4 py-3 text-left text-sm">Time</th>
-              <th className="px-4 py-3 text-left text-sm">Action</th>
             </tr>
           </thead>
 

@@ -217,15 +217,29 @@ const handleCreateSession = async () => {
   });
 
   // ✅ FILTER ATTENDANCE
-const filteredAttendance = attendanceRecords.filter((r) => {
-  const matchesSearch = r.name
-    .toLowerCase()
-    .includes(searchQuery.toLowerCase());
+  const statusOrder = {
+    Present: 1,
+    Late: 2,
+    Absent: 3,
+  };
 
-  const matchesStatus = statusFilter === "All" || r.status === statusFilter;
+  const filteredAttendance = attendanceRecords
+    .filter((r) => {
+      const matchesSearch = r.name
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase());
 
-  return matchesSearch && matchesStatus;
-});
+      const matchesStatus = statusFilter === "All" || r.status === statusFilter;
+
+      return matchesSearch && matchesStatus;
+    })
+    .sort((a, b) => {
+      const statusDiff = statusOrder[a.status] - statusOrder[b.status];
+
+      if (statusDiff !== 0) return statusDiff;
+
+      return a.name.localeCompare(b.name);
+    });
 
   // ✅ FILTER PARTICIPANTS
   const filteredParticipants = participants.filter(
@@ -342,21 +356,18 @@ const formatTime = (time: string) => {
 };
 
   // ✅ QR (NOW MATCHES AttendanceRecord)
-  const handleShowQR = (item: any) => {
-    // from AttendanceTable
-    if (item.name && item.id) {
-      setQrData({
-        name: item.name,
-        data: item.id.toString(),
-      });
-    } 
-    // from ParticipantsTable
-    else {
-      setQrData({
-        name: `${item.first_name} ${item.last_name}`,
-        data: item.id.toString(),
-      });
-    }
+const handleShowQR = (item: any) => {
+  const name = item.first_name
+    ? `${item.first_name} ${item.last_name}`
+    : item.name;
+
+  const studentCode = item.student_code || item.id;
+
+  setQrData({
+    name,
+    studentCode,
+    data: studentCode,
+  });
 };
 
 if (currentPage === "register") {
@@ -401,9 +412,68 @@ if (currentPage === "scanner") {
 
 
   // ✅ EXPORT (for Header)
-  const handleExportCSV = () => {
-    console.log("Export CSV clicked");
-  };
+const handleExportCSV = () => {
+  const rows =
+    activeTab === "attendance"
+      ? filteredAttendance.map((r) => ({
+          Name: r.name,
+          Age: r.age,
+          Gender: r.gender,
+          Status: r.status,
+          Time: r.time,
+          Date: selectedDate,
+          Session: selectedPeriod,
+        }))
+      : filteredParticipants.map((p) => ({
+          "First Name": p.first_name,
+          "Last Name": p.last_name,
+          "Middle Initial": p.middle_initial || "",
+          "Age Group": p.age_group || "",
+          Gender: p.gender || "",
+          School: p.school || "",
+          Course: p.course || "",
+          "Grade/Year": p.grade_year || "",
+          "Contact Number": p.contact_number || "",
+        }));
+
+  if (rows.length === 0) {
+    alert("No data to export.");
+    return;
+  }
+
+  const headers = Object.keys(rows[0]);
+
+  const csvContent = [
+    headers.join(","),
+    ...rows.map((row) =>
+      headers
+        .map((header) => {
+          const value = String(row[header as keyof typeof row] ?? "");
+          return `"${value.replace(/"/g, '""')}"`;
+        })
+        .join(",")
+    ),
+  ].join("\n");
+
+  const blob = new Blob([csvContent], {
+    type: "text/csv;charset=utf-8;",
+  });
+
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+
+  link.href = url;
+  link.download =
+    activeTab === "attendance"
+      ? `attendance-${selectedDate}-${selectedPeriod}.csv`
+      : `participants.csv`;
+
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+
+  URL.revokeObjectURL(url);
+};
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -684,6 +754,7 @@ if (currentPage === "scanner") {
         <QRModal
           name={qrData.name}
           data={qrData.data}
+          studentCode={qrData.studentCode} // ✅ ADD THIS
           onClose={() => setQrData(null)}
         />
       )}

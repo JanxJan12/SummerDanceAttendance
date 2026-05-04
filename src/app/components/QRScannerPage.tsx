@@ -149,7 +149,7 @@ const handleScan = async (data: string) => {
 
     // ❌ BLOCK AFTER CUTOFF
     if (cutoffTime && currentTime > cutoffTime) {
-      throw new Error("Session is closed");
+      throw new Error("Attendance timeout. Cutoff time has passed.");
     }
 
     // ⚠️ DETERMINE STATUS
@@ -169,13 +169,30 @@ const handleScan = async (data: string) => {
       studentId = data;
     }
 
-    studentId = Number(studentId);
+    const scannedCode = String(studentId).trim();
 
-    if (!studentId) {
-      throw new Error("Invalid QR");
-    }
+if (!scannedCode) {
+  throw new Error("Invalid student code");
+}
 
-    console.log("FINAL STUDENT ID:", studentId);
+const { data: student, error: studentError } = await supabase
+  .from("students")
+  .select("*")
+  .eq("student_code", scannedCode)
+  .maybeSingle();
+
+if (studentError) {
+  console.error("STUDENT ERROR:", studentError);
+  throw new Error("Failed to find student");
+}
+
+if (!student) {
+  throw new Error("Student code not found");
+}
+
+studentId = student.id;
+
+console.log("FINAL STUDENT ID:", studentId);
 
     // ✅ 4. CHECK DUPLICATE
     const { data: existing } = await supabase
@@ -254,27 +271,17 @@ if (navigator.vibrate) {
     }, 2000);
   }
 };
-  const handleManualSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!manualId.trim()) return;
 
-    const result: ScanResult = {
-      id: manualId,
-      name: `Participant ${manualId}`,
-      time: new Date().toLocaleTimeString('en-US', {
-        hour: '2-digit',
-        minute: '2-digit',
-      }),
-      status: 'success',
-    };
+const handleManualSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
 
-    setScanResult(result);
-    setRecentScans((prev) => [result, ...prev.slice(0, 9)]);
-    setManualId('');
-    setShowManualInput(false);
+  if (!manualId.trim()) return;
 
-    setTimeout(() => setScanResult(null), 3000);
-  };
+  await handleScan(manualId.trim());
+
+  setManualId("");
+  setShowManualInput(false);
+};
 
   return (
         <div className="min-h-screen bg-gray-900 flex flex-col">
@@ -413,7 +420,7 @@ if (navigator.vibrate) {
                   type="text"
                   value={manualId}
                   onChange={(e) => setManualId(e.target.value)}
-                  placeholder="Enter participant ID"
+                  placeholder="ENTER STUDENT CODE"
                   className="w-full px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl bg-gray-800 border border-gray-700 text-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-sm sm:text-base"
                   autoFocus
                 />
