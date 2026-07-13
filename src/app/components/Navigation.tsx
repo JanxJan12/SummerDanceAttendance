@@ -13,7 +13,10 @@ const navigationItems = [
 
 export default function Navigation({ currentPage, onNavigate }: NavigationProps) {
   return (
-    <nav className="mobile-nav-safe surface-card fixed left-3 right-3 z-50 rounded-2xl p-1.5 shadow-2xl md:relative md:left-auto md:right-auto md:mx-auto md:w-fit md:rounded-2xl">
+    <nav
+      aria-label="Primary navigation"
+      className="surface-card relative z-20 mx-auto w-full max-w-md rounded-2xl p-1.5 shadow-lg md:w-fit"
+    >
       <div className="flex items-center justify-around gap-1 md:justify-center">
         {navigationItems.map(({ id, label, icon: Icon }) => {
           const active = currentPage === id;
