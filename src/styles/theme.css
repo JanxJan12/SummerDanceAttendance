@@ -432,7 +432,7 @@
   }
 
   .scanner-target {
-    width: min(15rem, calc(100vw - 5rem));
+    width: min(13rem, calc(100vw - 9rem));
   }
 }
 
@@ -448,7 +448,7 @@
 
 @media (min-width: 640px) and (min-height: 561px) {
   .scanner-target {
-    width: 18rem;
+    width: 16rem;
   }
 }
 
@@ -471,7 +471,13 @@
 
 @media (max-height: 560px) and (orientation: landscape) {
   .scanner-target {
-    width: min(13rem, calc(100dvh - 9rem));
+    width: min(11rem, calc(100dvh - 9rem));
+  }
+}
+
+@media (min-width: 1024px) and (min-height: 650px) {
+  .scanner-target {
+    width: 18rem;
   }
 }
 

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { BrowserMultiFormatReader } from '@zxing/browser';
-import { Camera, CheckCircle, Clock3, Keyboard, ScanLine, ShieldCheck, XCircle, Zap } from 'lucide-react';
+import { BrowserMultiFormatReader, type IScannerControls } from '@zxing/browser';
+import { Camera, CheckCircle, Clock3, Keyboard, RotateCcw, ScanLine, ShieldCheck, XCircle, Zap } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import {supabase } from '../../lib/supabase';
 import Navigation from "./Navigation";
@@ -29,7 +29,9 @@ export default function QRScannerPage({
   const [manualId, setManualId] = useState('');
   const [showManualInput, setShowManualInput] = useState(false);
   const codeReaderRef = useRef<BrowserMultiFormatReader | null>(null);
-  const [scanLock, setScanLock] = useState(false);
+  const scannerControlsRef = useRef<IScannerControls | null>(null);
+  const scanLockRef = useRef(false);
+  const [cameraError, setCameraError] = useState<string | null>(null);
 
   useEffect(() => {
     startScanning();
@@ -40,67 +42,91 @@ export default function QRScannerPage({
 
   const startScanning = async () => {
     try {
+      setCameraError(null);
+      setScanning(false);
+
+      scannerControlsRef.current?.stop();
+      scannerControlsRef.current = null;
+      if (videoRef.current?.srcObject) {
+        (videoRef.current.srcObject as MediaStream).getTracks().forEach((track) => track.stop());
+        videoRef.current.srcObject = null;
+      }
+
       const codeReader = new BrowserMultiFormatReader();
       codeReaderRef.current = codeReader;
 
-const devices = await BrowserMultiFormatReader.listVideoInputDevices();
+      if (!navigator.mediaDevices?.getUserMedia || !videoRef.current) {
+        throw new Error("Camera access is not supported by this browser.");
+      }
 
-if (devices.length === 0) {
-  console.error("No camera found");
-  return;
-}
+      // One stream only: let the browser select the rear camera from constraints.
+      // Opening a separate preview stream and a ZXing stream at the same time can
+      // make autofocus unreliable on iOS Safari.
+      const controls = await codeReader.decodeFromConstraints(
+        {
+          audio: false,
+          video: {
+            facingMode: { ideal: "environment" },
+            width: { ideal: 1920 },
+            height: { ideal: 1080 },
+            frameRate: { ideal: 30, max: 30 },
+          },
+        },
+        videoRef.current,
+        (result) => {
+          if (result) handleScan(result.getText());
+        }
+      );
 
-// 🔥 Prefer BACK camera (important for phones)
-const backCamera =
-  devices.find((d) => d.label.toLowerCase().includes("back")) || devices[0];
+      scannerControlsRef.current = controls;
 
-// 🔥 Request better quality stream
-const stream = await navigator.mediaDevices.getUserMedia({
-  video: {
-    deviceId: backCamera.deviceId,
-    facingMode: "environment",
-    width: { ideal: 1280 },
-    height: { ideal: 720 },
-  },
-});
+      // Continuous focus is applied only when the active mobile camera exposes it.
+      const stream = videoRef.current.srcObject as MediaStream | null;
+      const track = stream?.getVideoTracks()[0];
+      const capabilities = track?.getCapabilities?.() as MediaTrackCapabilities & {
+        focusMode?: string[];
+      };
 
-if (videoRef.current) {
-  videoRef.current.srcObject = stream;
-}
+      if (track && capabilities?.focusMode?.includes("continuous")) {
+        await track.applyConstraints({
+          advanced: [{ focusMode: "continuous" } as MediaTrackConstraintSet],
+        }).catch(() => undefined);
+      }
 
-setScanning(true);
-
-// 🔥 Use selected camera
-await codeReader.decodeFromVideoDevice(
-  backCamera.deviceId,
-  videoRef.current!,
-  (result, error) => {
-    if (result) {
-      handleScan(result.getText());
-    }
-  }
-);
+      setScanning(true);
     } catch (err:any) {
       console.error('Error starting scanner:', err);
+      scannerControlsRef.current?.stop();
+      scannerControlsRef.current = null;
+      if (videoRef.current?.srcObject) {
+        (videoRef.current.srcObject as MediaStream).getTracks().forEach((track) => track.stop());
+        videoRef.current.srcObject = null;
+      }
+      codeReaderRef.current = null;
+      const message =
+        err?.name === "NotAllowedError"
+          ? "Camera permission was denied. Allow camera access, then try again."
+          : err?.name === "NotFoundError"
+            ? "No rear camera was found on this device."
+            : err?.message || "The camera could not be started.";
+      setCameraError(message);
+      setScanning(false);
     }
   };
 
 const stopScanning = () => {
   try {
-    // stop camera tracks
+    scannerControlsRef.current?.stop();
+    scannerControlsRef.current = null;
+
     if (videoRef.current?.srcObject) {
       const stream = videoRef.current.srcObject as MediaStream;
       stream.getTracks().forEach((track) => track.stop());
       videoRef.current.srcObject = null;
     }
 
-    // safely stop ZXing if method exists
-    const reader: any = codeReaderRef.current;
-    if (reader?.reset) {
-      reader.reset();
-    }
-
     codeReaderRef.current = null;
+    scanLockRef.current = false;
     setScanning(false);
   } catch (err) {
     console.error("Stop scanner error:", err);
@@ -113,8 +139,8 @@ const stopScanning = () => {
   
 const handleScan = async (data: string) => {
   // 🔥 PREVENT MULTIPLE SCANS
-  if (scanLock) return;
-  setScanLock(true);
+  if (scanLockRef.current) return;
+  scanLockRef.current = true;
 
   console.log("SCANNED RAW:", data);
 
@@ -246,7 +272,7 @@ if (navigator.vibrate) {
     // 🔓 UNLOCK AFTER DELAY
     setTimeout(() => {
       setScanResult(null);
-      setScanLock(false);
+      scanLockRef.current = false;
     }, 2000);
 
   } catch (err: any) {
@@ -267,7 +293,7 @@ if (navigator.vibrate) {
     // 🔓 UNLOCK EVEN ON ERROR
     setTimeout(() => {
       setScanResult(null);
-      setScanLock(false);
+      scanLockRef.current = false;
     }, 2000);
   }
 };
@@ -303,8 +329,8 @@ const handleManualSubmit = async (e: React.FormEvent) => {
             </div>
           </div>
           <div className="flex items-center gap-2 self-start rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs font-bold text-slate-200 backdrop-blur sm:self-auto">
-            <span className={`h-2.5 w-2.5 rounded-full ${scanning ? 'status-live bg-emerald-400' : 'bg-rose-400'}`} />
-            {selectedPeriod} · {scanning ? 'Camera ready' : 'Camera offline'}
+            <span className={`h-2.5 w-2.5 rounded-full ${scanning ? 'status-live bg-emerald-400' : cameraError ? 'bg-rose-400' : 'bg-amber-400'}`} />
+            {selectedPeriod} · {scanning ? 'Camera ready' : cameraError ? 'Camera needs access' : 'Starting camera'}
           </div>
         </div>
       </header>
@@ -312,8 +338,8 @@ const handleManualSubmit = async (e: React.FormEvent) => {
       <main className="relative mx-auto grid max-w-5xl gap-4 px-3 min-[390px]:px-4 sm:gap-5 sm:px-6 lg:grid-cols-[1.2fr_0.8fr] lg:px-8">
         <motion.section initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} className="rounded-[2rem] border border-white/10 bg-white/5 p-3 shadow-[0_30px_80px_-35px_rgba(214,155,32,0.38)] backdrop-blur-xl sm:p-4">
           <div className="relative overflow-hidden rounded-[1.5rem] bg-black shadow-2xl [transform:perspective(1000px)_rotateX(0.8deg)]">
-            <div className="aspect-square">
-              <video ref={videoRef} className="h-full w-full object-cover" autoPlay playsInline muted />
+            <div className="aspect-[4/3] sm:aspect-square lg:aspect-[4/3]">
+              <video ref={videoRef} className="h-full w-full object-cover" autoPlay playsInline muted aria-label="Rear camera QR scanner preview" />
               <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_15%,rgba(2,6,23,0.52)_100%)]" />
 
               <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
@@ -328,10 +354,15 @@ const handleManualSubmit = async (e: React.FormEvent) => {
 
               {!scanning && (
                 <div className="absolute inset-0 flex items-center justify-center bg-slate-950/90 backdrop-blur-sm">
-                  <div className="text-center">
+                  <div className="max-w-xs px-5 text-center">
                     <div className="mx-auto mb-3 grid h-14 w-14 place-items-center rounded-2xl bg-white/8 text-slate-400"><Camera size={27} /></div>
-                    <p className="font-semibold text-slate-300">Camera not available</p>
-                    <p className="mt-1 text-xs text-slate-500">Check camera permissions and reload.</p>
+                    <p className="font-semibold text-slate-300">{cameraError ? 'Camera unavailable' : 'Opening rear camera'}</p>
+                    <p className="mt-1 text-xs leading-5 text-slate-500">{cameraError || 'Preparing autofocus for QR scanning…'}</p>
+                    {cameraError && (
+                      <button type="button" onClick={startScanning} className="tap-target mt-4 inline-flex items-center justify-center gap-2 rounded-xl bg-white/10 px-4 text-xs font-bold text-white transition hover:bg-white/15">
+                        <RotateCcw size={14} /> Try camera again
+                      </button>
+                    )}
                   </div>
                 </div>
               )}
