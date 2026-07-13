@@ -1,4 +1,4 @@
-import { Search } from 'lucide-react';
+import { Search, X } from 'lucide-react';
 
 interface SearchBarProps {
   value: string;
@@ -8,15 +8,30 @@ interface SearchBarProps {
 
 export default function SearchBar({ value, onChange, placeholder = 'Search by name...' }: SearchBarProps) {
   return (
-    <div className="relative mb-4 sm:mb-6">
-      <Search className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+    <div className="group relative w-full sm:max-w-md">
+      <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-indigo-600" size={18} />
       <input
         type="text"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full pl-10 sm:pl-12 pr-4 py-2.5 sm:py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all text-sm sm:text-base"
+        className="field-control py-3 pl-11 pr-12 text-sm shadow-sm"
+        aria-label={placeholder}
       />
+      {value ? (
+        <button
+          type="button"
+          onClick={() => onChange('')}
+          className="absolute right-2.5 top-1/2 grid h-8 w-8 -translate-y-1/2 place-items-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+          aria-label="Clear search"
+        >
+          <X size={16} />
+        </button>
+      ) : (
+        <span className="absolute right-3 top-1/2 hidden -translate-y-1/2 rounded-md border border-slate-200 bg-white px-2 py-1 text-[10px] font-semibold text-slate-400 sm:inline">
+          SEARCH
+        </span>
+      )}
     </div>
   );
 }

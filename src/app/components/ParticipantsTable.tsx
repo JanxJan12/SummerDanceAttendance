@@ -1,5 +1,5 @@
-import { QrCode, Edit, Trash2, Download} from 'lucide-react';
-
+import { Download, Edit, QrCode, Trash2, UsersRound } from 'lucide-react';
+import { motion } from 'motion/react';
 
 interface Participant {
   id: string;
@@ -22,6 +22,20 @@ interface ParticipantsTableProps {
   onShowQR: (participant: Participant) => void;
   onDownloadQR: (participant: Participant) => void;
 }
+
+const getAgeBadgeClass = (ageGroup: string) => {
+  if (ageGroup === "Kids") return "bg-teal-50 text-teal-700 border-teal-100";
+  if (ageGroup === "Teens") return "bg-indigo-50 text-indigo-700 border-indigo-100";
+  if (ageGroup === "Adult") return "bg-orange-50 text-orange-700 border-orange-100";
+  return "bg-slate-50 text-slate-600 border-slate-200";
+};
+
+const getGenderBadgeClass = (gender: string) => {
+  if (gender === "Male") return "bg-blue-50 text-blue-700 border-blue-100";
+  if (gender === "Female") return "bg-pink-50 text-pink-700 border-pink-100";
+  return "bg-slate-50 text-slate-600 border-slate-200";
+};
+
 export default function ParticipantsTable({
   participants,
   onEdit,
@@ -29,102 +43,144 @@ export default function ParticipantsTable({
   onShowQR,
   onDownloadQR,
 }: ParticipantsTableProps) {
-  const getAgeBadgeClass = (ageGroup: string) => {
-  if (ageGroup === "Kids") return "bg-green-100 text-green-700";
-  if (ageGroup === "Teens") return "bg-blue-100 text-blue-700";
-  if (ageGroup === "Adult") return "bg-purple-100 text-purple-700";
-  return "bg-gray-100 text-gray-700";
-};
-
-const getGenderBadgeClass = (gender: string) => {
-  if (gender === "Male") return "bg-sky-100 text-sky-700";
-  if (gender === "Female") return "bg-pink-100 text-pink-700";
-  return "bg-gray-100 text-gray-700";
-};
   return (
-    <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-[900px]">
-          <thead>
-            <tr className="bg-gray-50 border-b border-gray-200">
-              <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-semibold text-gray-700">First Name</th>
-              <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-semibold text-gray-700">Last Name</th>
-              <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-semibold text-gray-700">MI</th>
-              <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-semibold text-gray-700">Age Group</th>
-              <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-semibold text-gray-700">Gender</th>
-              <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-semibold text-gray-700">Contact Number</th>
-              <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-semibold text-gray-700">School</th>
-              <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-semibold text-gray-700">Course/ Strand</th>
-              <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-semibold text-gray-700">Grade/ Year</th>
-              <th className="sticky right-0 z-20 bg-gray-50 px-2 py-3 text-center text-xs font-semibold text-gray-700 w-[120px]">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {participants.map((participant) => (
-              <tr key={participant.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors group">
-                <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-gray-900">{participant.first_name}</td>
-                <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-gray-900">{participant.last_name}</td>
-                <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-gray-700">{participant.middle_initial || '-'}</td>
-               <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm">
-                <span
-                  className={`px-2 py-1 rounded-full text-xs font-medium ${getAgeBadgeClass(
-                    participant.age_group
-                  )}`}
-                >
-                  {participant.age_group}
-                </span>
-              </td>
-                              <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm">
-                <span
-                  className={`px-2 py-1 rounded-full text-xs font-medium ${getGenderBadgeClass(
-                    participant.gender
-                  )}`}
-                >
-                  {participant.gender}
-                </span>
-              </td>
-                <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-gray-700">{participant.contact_number || '-'}</td>
-                <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-gray-700 max-w-[150px] truncate" title={participant.school || '-'}>{participant.school || '-'}</td>
-                <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-gray-700 max-w-[120px] truncate" title={participant.course || '-'}>{participant.course || '-'}</td>
-                <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-gray-700">{participant.grade_year || '-'}</td>
-                <td className="sticky right-0 z-10 bg-white px-2 py-3 w-[105px]">
-                  <div className="flex gap-1">
-                    <button
-                      onClick={() => onShowQR(participant)}
-                      className="p-1.5 sm:p-2 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 transition-colors"
-                      title="Show QR Code"
-                    >
-                      <QrCode size={14} className="sm:w-4 sm:h-4" />
-                    </button>
-                    <button
-                      onClick={() => onDownloadQR(participant)}
-                      className="p-1.5 sm:p-2 bg-green-100 text-green-600 rounded-lg hover:bg-green-200 transition-colors"
-                      title="Download QR Code"
-                    >
-                      <Download size={14} className="sm:w-4 sm:h-4" />
-                    </button>
-
-                    <button
-                      onClick={() => onEdit(participant)}
-                      className="p-1.5 sm:p-2 bg-yellow-100 text-yellow-600 rounded-lg hover:bg-yellow-200 transition-colors"
-                      title="Edit"
-                    >
-                      <Edit size={14} className="sm:w-4 sm:h-4" />
-                    </button>
-                    <button
-                      onClick={() => onDelete(participant.id)}
-                      className="p-1.5 sm:p-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors"
-                      title="Delete"
-                    >
-                      <Trash2 size={14} className="sm:w-4 sm:h-4" />
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+    <motion.section
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="surface-card overflow-hidden rounded-3xl"
+    >
+      <div className="flex items-center gap-3 border-b border-slate-100/80 px-5 py-5 sm:px-6">
+        <div className="grid h-11 w-11 place-items-center rounded-2xl bg-cyan-50 text-cyan-700">
+          <UsersRound size={21} />
+        </div>
+        <div>
+          <h3 className="font-bold text-slate-900">Next Moves Directory</h3>
+          <p className="text-sm text-slate-500">
+            {participants.length} registered participant{participants.length !== 1 ? 's' : ''}
+          </p>
+        </div>
       </div>
-    </div>
+
+      {participants.length === 0 ? (
+        <div className="grid min-h-64 place-items-center px-6 py-12 text-center">
+          <div>
+            <div className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-2xl bg-slate-100 text-slate-400">
+              <UsersRound size={25} />
+            </div>
+            <h4 className="font-semibold text-slate-800">No participants found</h4>
+            <p className="mt-1 text-sm text-slate-500">Try another search or register a new participant.</p>
+          </div>
+        </div>
+      ) : (
+        <>
+          <div className="grid gap-3 p-3 sm:p-4 md:grid-cols-2 xl:hidden">
+            {participants.map((participant, index) => {
+              const fullName = `${participant.first_name} ${participant.last_name}`;
+              const memberInitials = `${participant.first_name?.[0] || ''}${participant.last_name?.[0] || ''}`.toUpperCase();
+              return (
+                <motion.article
+                  key={`mobile-${participant.id}`}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: Math.min(index * 0.035, 0.3) }}
+                  className="rounded-2xl border border-slate-100 bg-white/85 p-4 shadow-sm"
+                >
+                  <div className="flex min-w-0 items-start gap-3">
+                    <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-indigo-100 to-cyan-100 text-sm font-black text-indigo-700">{memberInitials}</span>
+                    <div className="min-w-0 flex-1">
+                      <h4 className="break-words text-base font-bold leading-5 text-slate-900">{fullName}</h4>
+                      {participant.student_code && <p className="mt-1 break-all font-mono text-[11px] font-semibold tracking-wider text-slate-400">{participant.student_code}</p>}
+                      <div className="mt-2 flex flex-wrap gap-1.5">
+                        <span className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${getAgeBadgeClass(participant.age_group)}`}>{participant.age_group}</span>
+                        <span className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${getGenderBadgeClass(participant.gender)}`}>{participant.gender}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <dl className="mt-4 grid grid-cols-1 gap-3 border-t border-slate-100 pt-4 min-[420px]:grid-cols-2">
+                    <div className="min-w-0"><dt className="text-[10px] font-bold uppercase tracking-[0.1em] text-slate-400">Contact</dt><dd className="mt-1 break-words text-xs font-medium text-slate-700">{participant.contact_number || '-'}</dd></div>
+                    <div className="min-w-0"><dt className="text-[10px] font-bold uppercase tracking-[0.1em] text-slate-400">School</dt><dd className="mt-1 break-words text-xs font-medium text-slate-700">{participant.school || '-'}</dd></div>
+                    <div className="min-w-0"><dt className="text-[10px] font-bold uppercase tracking-[0.1em] text-slate-400">Course / Strand</dt><dd className="mt-1 break-words text-xs font-medium text-slate-700">{participant.course || '-'}</dd></div>
+                    <div className="min-w-0"><dt className="text-[10px] font-bold uppercase tracking-[0.1em] text-slate-400">Grade / Year</dt><dd className="mt-1 break-words text-xs font-medium text-slate-700">{participant.grade_year || '-'}</dd></div>
+                  </dl>
+
+                  <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                    <button onClick={() => onShowQR(participant)} className="tap-target flex items-center justify-center gap-2 rounded-xl bg-indigo-50 px-2 text-xs font-bold text-indigo-700 transition active:scale-[0.98]" aria-label={`Show QR code for ${fullName}`}><QrCode size={16} /> QR</button>
+                    <button onClick={() => onDownloadQR(participant)} className="tap-target flex items-center justify-center gap-2 rounded-xl bg-emerald-50 px-2 text-xs font-bold text-emerald-700 transition active:scale-[0.98]" aria-label={`Download QR code for ${fullName}`}><Download size={16} /> Save</button>
+                    <button onClick={() => onEdit(participant)} className="tap-target flex items-center justify-center gap-2 rounded-xl bg-amber-50 px-2 text-xs font-bold text-amber-700 transition active:scale-[0.98]" aria-label={`Edit ${fullName}`}><Edit size={16} /> Edit</button>
+                    <button onClick={() => onDelete(participant.id)} className="tap-target flex items-center justify-center gap-2 rounded-xl bg-rose-50 px-2 text-xs font-bold text-rose-700 transition active:scale-[0.98]" aria-label={`Delete ${fullName}`}><Trash2 size={16} /> Delete</button>
+                  </div>
+                </motion.article>
+              );
+            })}
+          </div>
+
+          <div className="responsive-scroll hidden overflow-x-auto xl:block">
+          <table className="w-full min-w-[1050px]">
+            <thead>
+              <tr className="border-b border-slate-100 bg-slate-50/80">
+                {['First Name', 'Last Name', 'MI', 'Age Group', 'Gender', 'Contact Number', 'School', 'Course / Strand', 'Grade / Year'].map((heading) => (
+                  <th key={heading} className="px-4 py-4 text-left text-[11px] font-bold uppercase tracking-[0.1em] text-slate-500 first:pl-6">
+                    {heading}
+                  </th>
+                ))}
+                <th className="sticky right-0 z-20 w-[170px] border-l border-slate-100 bg-slate-50 px-3 py-4 text-center text-[11px] font-bold uppercase tracking-[0.1em] text-slate-500">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {participants.map((participant, index) => {
+                const fullName = `${participant.first_name} ${participant.last_name}`;
+                return (
+                  <motion.tr
+                    key={participant.id}
+                    initial={{ opacity: 0, x: -8 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: Math.min(index * 0.02, 0.28) }}
+                    className="group border-b border-slate-100/80 transition-colors last:border-b-0 hover:bg-indigo-50/35"
+                  >
+                    <td className="px-4 py-4 pl-6 text-sm font-semibold text-slate-900">{participant.first_name}</td>
+                    <td className="px-4 py-4 text-sm font-semibold text-slate-900">{participant.last_name}</td>
+                    <td className="px-4 py-4 text-sm text-slate-600">{participant.middle_initial || '-'}</td>
+                    <td className="px-4 py-4 text-sm">
+                      <span className={`rounded-full border px-2.5 py-1 text-xs font-semibold ${getAgeBadgeClass(participant.age_group)}`}>
+                        {participant.age_group}
+                      </span>
+                    </td>
+                    <td className="px-4 py-4 text-sm">
+                      <span className={`rounded-full border px-2.5 py-1 text-xs font-semibold ${getGenderBadgeClass(participant.gender)}`}>
+                        {participant.gender}
+                      </span>
+                    </td>
+                    <td className="px-4 py-4 text-sm text-slate-600">{participant.contact_number || '-'}</td>
+                    <td className="max-w-[170px] truncate px-4 py-4 text-sm text-slate-600" title={participant.school || '-'}>{participant.school || '-'}</td>
+                    <td className="max-w-[150px] truncate px-4 py-4 text-sm text-slate-600" title={participant.course || '-'}>{participant.course || '-'}</td>
+                    <td className="px-4 py-4 text-sm text-slate-600">{participant.grade_year || '-'}</td>
+                    <td className="sticky right-0 z-10 w-[170px] border-l border-slate-100 bg-white/95 px-3 py-3 backdrop-blur transition-colors group-hover:bg-indigo-50/95">
+                      <div className="flex justify-center gap-1.5">
+                        <button onClick={() => onShowQR(participant)} className="grid h-8 w-8 place-items-center rounded-lg bg-indigo-50 text-indigo-600 transition hover:-translate-y-0.5 hover:bg-indigo-600 hover:text-white" title="Show QR Code" aria-label={`Show QR code for ${fullName}`}>
+                          <QrCode size={15} />
+                        </button>
+                        <button onClick={() => onDownloadQR(participant)} className="grid h-8 w-8 place-items-center rounded-lg bg-emerald-50 text-emerald-600 transition hover:-translate-y-0.5 hover:bg-emerald-600 hover:text-white" title="Download QR Code" aria-label={`Download QR code for ${fullName}`}>
+                          <Download size={15} />
+                        </button>
+                        <button onClick={() => onEdit(participant)} className="grid h-8 w-8 place-items-center rounded-lg bg-amber-50 text-amber-600 transition hover:-translate-y-0.5 hover:bg-amber-500 hover:text-white" title="Edit" aria-label={`Edit ${fullName}`}>
+                          <Edit size={15} />
+                        </button>
+                        <button onClick={() => onDelete(participant.id)} className="grid h-8 w-8 place-items-center rounded-lg bg-rose-50 text-rose-600 transition hover:-translate-y-0.5 hover:bg-rose-600 hover:text-white" title="Delete" aria-label={`Delete ${fullName}`}>
+                          <Trash2 size={15} />
+                        </button>
+                      </div>
+                    </td>
+                  </motion.tr>
+                );
+              })}
+            </tbody>
+          </table>
+          </div>
+        </>
+      )}
+    </motion.section>
   );
 }

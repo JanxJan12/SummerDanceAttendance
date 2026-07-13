@@ -13,6 +13,19 @@ import AttendanceTable, { AttendanceRecord } from "./components/AttendanceTable"
 import ParticipantsTable from "./components/ParticipantsTable";
 import EditModal from "./components/EditModal";
 import QRModal from "./components/QRModal";
+import {
+  AlertTriangle,
+  CalendarDays,
+  Check,
+  Clock3,
+  History,
+  RotateCcw,
+  Settings2,
+  Sparkles,
+  Trash2,
+  UsersRound,
+} from "lucide-react";
+import { motion } from "motion/react";
 
 export default function App()  { 
   
@@ -385,19 +398,20 @@ const isToday = selectedDate === todayDate;
 
 if (currentPage === "scanner" && !isToday) {
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-      <div className="bg-white p-6 rounded-xl shadow text-center space-y-4">
-        <p className="text-red-600 font-semibold">
-          Scanning is only allowed for today's session.
-        </p>
-
+    <div className="app-shell flex min-h-screen items-center justify-center p-4">
+      <motion.div initial={{ opacity: 0, scale: 0.94, y: 16 }} animate={{ opacity: 1, scale: 1, y: 0 }} className="surface-card w-full max-w-md rounded-3xl p-7 text-center">
+        <div className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-2xl bg-amber-50 text-amber-600">
+          <History size={25} />
+        </div>
+        <h2 className="text-xl font-bold text-slate-900">Historical date selected</h2>
+        <p className="mt-2 text-sm leading-6 text-slate-500">Scanning is available only for today. Return to the dashboard and switch back to today before opening the scanner.</p>
         <button
           onClick={() => setCurrentPage("dashboard")}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg"
+          className="brand-button mt-6 w-full rounded-xl px-4 py-3 text-sm font-semibold"
         >
           Back to Dashboard
         </button>
-      </div>
+      </motion.div>
     </div>
   );
 }
@@ -478,323 +492,260 @@ const handleExportCSV = () => {
 };
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="app-shell page-mobile-clearance">
+      <span className="ambient-orb left-[-7rem] top-28 h-60 w-60 bg-indigo-300/20" />
+      <span className="ambient-orb right-[-8rem] top-[28rem] h-72 w-72 bg-cyan-300/20 [animation-delay:-3s]" />
       <Header onExportCSV={handleExportCSV} />
-      
 
-      <main className="max-w-6xl mx-auto p-4 space-y-4">
-    
+      <main className="page-enter mx-auto max-w-7xl space-y-5 px-3 py-5 min-[390px]:px-4 sm:space-y-6 sm:px-6 sm:py-7 lg:px-8">
         <Navigation currentPage={currentPage} onNavigate={setCurrentPage} />
 
-        <TabNavigation activeTab={activeTab} onTabChange={setActiveTab} />
-
-        
-
-        <SearchBar value={searchQuery} onChange={setSearchQuery} />
-          <div className="flex justify-between items-center mb-4">
-            
-            {/* ✅ Dynamic Title */}
-            <h2 className="text-lg font-semibold">
-              {activeTab === "attendance" ? "Attendance" : "Participants"}
+        <section className="flex flex-col gap-4 pt-2 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <div className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.18em] text-indigo-600">
+              {activeTab === "attendance" ? <Sparkles size={14} /> : <UsersRound size={14} />}
+              Next Moves Company
+            </div>
+            <h2 className="gradient-text text-[clamp(1.75rem,8vw,2.25rem)] font-black leading-[1.08] tracking-tight sm:text-4xl">
+              {activeTab === "attendance" ? "Next Moves attendance center" : "Next Moves member directory"}
             </h2>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500 sm:text-base">
+              {activeTab === "attendance"
+                ? "Monitor company check-ins, manage session rules, and keep every Next Moves group running smoothly."
+                : "View, update, and manage every registered Next Moves participant and their QR access."}
+            </p>
+          </div>
+          <div className="flex items-center gap-3 self-start sm:self-auto">
+            <div className="next-moves-art hidden h-16 w-24 rounded-2xl border border-amber-200 shadow-lg sm:block" role="img" aria-label="Next Moves Company brand artwork" />
+            <div className="flex items-center gap-2 rounded-full border border-emerald-100 bg-emerald-50/80 px-3 py-2 text-xs font-bold text-emerald-700 shadow-sm">
+              <span className="status-live h-2.5 w-2.5 rounded-full bg-emerald-500" />
+              System live
+            </div>
+          </div>
+        </section>
 
-            {/* ✅ ONLY SHOW DATE PICKER IN ATTENDANCE TAB */}
-            {activeTab === "attendance" && (
-              <div className="flex items-center gap-2">
-                
-                {/* 📅 Date Picker */}
-                <div className="flex items-center gap-2 bg-white border rounded-lg px-3 py-2">
-                  <span>📅</span>
-                  <input
-                    type="date"
-                    value={selectedDate}
-                    onChange={(e) => setSelectedDate(e.target.value)}
-                    className="outline-none"
-                  />
+        <section className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <TabNavigation activeTab={activeTab} onTabChange={setActiveTab} />
+          <SearchBar value={searchQuery} onChange={setSearchQuery} />
+        </section>
 
-                  {/* ● Today Indicator */}
-                  {selectedDate === todayDate && (
-                    <span className="text-green-600 text-sm font-medium">
-                      ● Today
-                    </span>
-                  )}
-                  {/* 🟢 Start Session Button (ONLY TODAY + NO SESSION) */}
-                  {selectedDate === todayDate &&
-                  ((selectedPeriod === "Morning" && !morningSession) ||
-                  (selectedPeriod === "Afternoon" && !afternoonSession)) && (
+        {activeTab === "attendance" && (
+          <motion.section
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="surface-card rounded-2xl p-3 min-[390px]:p-4 sm:rounded-3xl sm:p-5"
+          >
+            <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+              <div className="flex items-center gap-3">
+                <div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-indigo-50 text-indigo-600">
+                  <CalendarDays size={21} />
+                </div>
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-400">Session date</p>
+                  <div className="mt-1 flex flex-wrap items-center gap-2">
+                    <input
+                      type="date"
+                      value={selectedDate}
+                      onChange={(e) => setSelectedDate(e.target.value)}
+                      className="min-w-0 max-w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 outline-none transition focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100"
+                    />
+                    {isToday && (
+                      <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-700">Today</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                <div className="flex rounded-2xl border border-slate-200 bg-slate-100/80 p-1">
+                  {(["Morning", "Afternoon"] as const).map((period) => (
                     <button
-                      onClick={handleCreateSession}
-                      className="px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm"
+                      key={period}
+                      type="button"
+                      onClick={() => setSelectedPeriod(period)}
+                      className={`flex-1 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all sm:flex-none ${
+                        selectedPeriod === period
+                          ? "bg-white text-indigo-700 shadow-sm"
+                          : "text-slate-500 hover:text-slate-800"
+                      }`}
+                      aria-pressed={selectedPeriod === period}
                     >
-                      Start {selectedPeriod} Session
+                      {period}
                     </button>
-                  )}
-
-                <div className="flex bg-gray-100 rounded-xl p-1 border">
-                  <button
-                    type="button"
-                    onClick={() => setSelectedPeriod("Morning")}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
-                      selectedPeriod === "Morning"
-                        ? "bg-white text-blue-600 shadow-sm"
-                        : "text-gray-500 hover:text-gray-700"
-                    }`}
-                  >
-                    Morning
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setSelectedPeriod("Afternoon")}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
-                      selectedPeriod === "Afternoon"
-                        ? "bg-white text-blue-600 shadow-sm"
-                        : "text-gray-500 hover:text-gray-700"
-                    }`}
-                  >
-                    Afternoon
-                  </button>
-                </div>
+                  ))}
                 </div>
 
-                {/* 🔥 Back to Today */}
-                {selectedDate !== todayDate && (
-                  <button
-                    onClick={() => setSelectedDate(todayDate)}
-                    className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm"
-                  >
-                    Back to Today
+                {!isToday && (
+                  <button onClick={() => setSelectedDate(todayDate)} className="flex items-center justify-center gap-2 rounded-xl bg-indigo-50 px-4 py-2.5 text-sm font-semibold text-indigo-700 transition hover:bg-indigo-100">
+                    <RotateCcw size={16} />
+                    Back to today
                   </button>
                 )}
 
+                {isToday && ((selectedPeriod === "Morning" && !morningSession) || (selectedPeriod === "Afternoon" && !afternoonSession)) && (
+                  <button onClick={handleCreateSession} className="brand-button rounded-xl px-4 py-2.5 text-sm font-semibold">
+                    Start {selectedPeriod} session
+                  </button>
+                )}
               </div>
-            )}
-          </div>
-          
-      {activeTab === "attendance" ? (
-        <>
-      <StatsCards
-        presentCount={presentCount}
-        lateCount={lateCount}
-        absentCount={absentCount}
-        statusFilter={statusFilter}
-        onStatusFilter={setStatusFilter}
-      />
-          {/* ✅ SESSION SETTINGS (ONLY TODAY + HAS SESSION) */}
-{session && isToday && (
-<div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 space-y-4">
-
-  <div>
-  <h3 className="font-semibold text-gray-800">Session Settings</h3> 
-  <p className="text-sm text-gray-500">
-    Manage late and cutoff times for Morning and Afternoon sessions.
-  </p>
-</div>
-  {isEditingSession && (
-    <div className="inline-flex items-center px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-medium">
-      Editing: {selectedPeriod}
-    </div>
-  )}
-
-  {!isEditingSession ? (
-    // ✅ VIEW MODE
-    <div className="flex items-center justify-between">
-
-        <div className="space-y-2">
-
-          <p className="text-sm text-gray-500">
-            Late Time:
-            <span className="ml-2 font-semibold text-yellow-600">
-              {formatTime(lateTime)}
-            </span>
-          </p>
-
-          <p className="text-sm text-gray-500">
-            Cutoff Time:
-            <span className="ml-2 font-semibold text-red-600">
-              {formatTime(cutoffTime)}
-            </span>
-          </p>
-
-        </div>
-
-        <button
-          onClick={() => setIsEditingSession(true)}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm"
-        >
-          Edit Session
-        </button>
-
-      </div>
-
-  ) : (
-    // ✏️ EDIT MODE
-<div className="space-y-3">
-  
-  {/* ROW: inputs + buttons */}
-  <div className="flex flex-wrap items-end gap-3">
-    
-    <div>
-      <label className="text-xs text-gray-500">Late Time</label>
-      <input
-        type="time"
-        value={lateTime}
-        min={selectedPeriod === "Morning" ? "00:00" : "12:00"}
-        max={selectedPeriod === "Morning" ? "11:59" : "23:59"}
-        onChange={(e) => {
-          setLateTime(e.target.value);
-          setSessionError(null);
-        }}
-        className="block border rounded-lg px-3 py-2 mt-1"
-      />
-    </div>
-
-    <div>
-      <label className="text-xs text-gray-500">Cutoff Time</label>
-      <input
-        type="time"
-        value={cutoffTime}
-        min={selectedPeriod === "Morning" ? "00:00" : "12:00"}
-        max={selectedPeriod === "Morning" ? "11:59" : "23:59"}
-        onChange={(e) => {
-          setCutoffTime(e.target.value);
-          setSessionError(null);
-        }}
-        className="block border rounded-lg px-3 py-2 mt-1"
-      />
-    </div>
-
-    <button
-      onClick={handleSaveSessionSettings}
-      className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm"
-    >
-      Save
-    </button>
-
-    <button
-      onClick={() => {
-        setLateTime(session?.late_time || "");
-        setCutoffTime(session?.cutoff_time || "");
-        setSessionError(null);
-        setIsEditingSession(false);
-      }}
-      className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg text-sm"
-    >
-      Cancel
-    </button>
-
-  </div>
-
-  {/* ERROR BELOW */}
-  {sessionError && (
-    <div className="rounded-lg bg-red-50 border border-red-200 px-3 py-2 text-sm text-red-600">
-      {sessionError}
-    </div>
-  )}
-
-</div>
-    
-  )}
-</div>
-)}
-
-          {/* ❌ NO SESSION */}
-          {!session && (
-            <div className="bg-yellow-100 text-yellow-800 p-4 rounded-lg text-center">
-              {selectedDate === todayDate
-                ? "No session yet. Start today's session to begin attendance."
-                : "There is no attendance record on this day"}
             </div>
-          )}
+          </motion.section>
+        )}
 
-          {/* ✅ SHOW TABLE */}
-          {session && (
-            <AttendanceTable
-              records={filteredAttendance}
+        {activeTab === "attendance" ? (
+          <div className="space-y-5">
+            <StatsCards
+              presentCount={presentCount}
+              lateCount={lateCount}
+              absentCount={absentCount}
+              statusFilter={statusFilter}
+              onStatusFilter={setStatusFilter}
             />
-          )}
-        </>
-      ) : (
+
+            {session && isToday && (
+              <motion.section layout className="surface-card overflow-hidden rounded-3xl p-5 sm:p-6">
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                  <div className="flex items-start gap-3">
+                    <div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-violet-50 text-violet-600">
+                      <Settings2 size={21} />
+                    </div>
+                    <div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h3 className="font-bold text-slate-900">Session timing</h3>
+                        <span className="rounded-full bg-indigo-50 px-2.5 py-1 text-[11px] font-bold text-indigo-700">{selectedPeriod}</span>
+                        {isEditingSession && <span className="rounded-full bg-amber-50 px-2.5 py-1 text-[11px] font-bold text-amber-700">Editing</span>}
+                      </div>
+                      <p className="mt-1 text-sm text-slate-500">Set the thresholds used to mark late arrivals and close check-in.</p>
+                    </div>
+                  </div>
+
+                  {!isEditingSession ? (
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="rounded-2xl border border-amber-100 bg-amber-50/80 px-4 py-2.5">
+                          <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-amber-600">Late after</p>
+                          <p className="mt-0.5 font-bold text-slate-800">{formatTime(lateTime)}</p>
+                        </div>
+                        <div className="rounded-2xl border border-rose-100 bg-rose-50/80 px-4 py-2.5">
+                          <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-rose-600">Cutoff</p>
+                          <p className="mt-0.5 font-bold text-slate-800">{formatTime(cutoffTime)}</p>
+                        </div>
+                      </div>
+                      <button onClick={() => setIsEditingSession(true)} className="rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-indigo-700">
+                        Edit timing
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="w-full space-y-3 lg:max-w-2xl">
+                      <div className="flex flex-wrap items-end gap-3">
+                        <label className="min-w-[150px] flex-1 text-xs font-bold uppercase tracking-[0.1em] text-slate-500">
+                          Late time
+                          <input
+                            type="time"
+                            value={lateTime}
+                            min={selectedPeriod === "Morning" ? "00:00" : "12:00"}
+                            max={selectedPeriod === "Morning" ? "11:59" : "23:59"}
+                            onChange={(e) => { setLateTime(e.target.value); setSessionError(null); }}
+                            className="field-control mt-1 block px-3 py-2 text-sm normal-case tracking-normal"
+                          />
+                        </label>
+                        <label className="min-w-[150px] flex-1 text-xs font-bold uppercase tracking-[0.1em] text-slate-500">
+                          Cutoff time
+                          <input
+                            type="time"
+                            value={cutoffTime}
+                            min={selectedPeriod === "Morning" ? "00:00" : "12:00"}
+                            max={selectedPeriod === "Morning" ? "11:59" : "23:59"}
+                            onChange={(e) => { setCutoffTime(e.target.value); setSessionError(null); }}
+                            className="field-control mt-1 block px-3 py-2 text-sm normal-case tracking-normal"
+                          />
+                        </label>
+                        <button onClick={handleSaveSessionSettings} className="flex h-11 items-center gap-2 rounded-xl bg-emerald-600 px-4 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-emerald-700">
+                          <Check size={16} /> Save
+                        </button>
+                        <button
+                          onClick={() => {
+                            setLateTime(session?.late_time || "");
+                            setCutoffTime(session?.cutoff_time || "");
+                            setSessionError(null);
+                            setIsEditingSession(false);
+                          }}
+                          className="h-11 rounded-xl bg-slate-100 px-4 text-sm font-semibold text-slate-600 transition hover:bg-slate-200"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                      {sessionError && (
+                        <div className="flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-medium text-rose-700">
+                          <AlertTriangle size={16} /> {sessionError}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </motion.section>
+            )}
+
+            {!session && (
+              <motion.section initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="surface-card rounded-3xl border-amber-200/70 p-6 text-center">
+                <div className="mx-auto mb-3 grid h-12 w-12 place-items-center rounded-2xl bg-amber-50 text-amber-600">
+                  <Clock3 size={22} />
+                </div>
+                <h3 className="font-bold text-slate-900">{isToday ? `No ${selectedPeriod.toLowerCase()} session yet` : "No session on this date"}</h3>
+                <p className="mx-auto mt-1 max-w-md text-sm text-slate-500">
+                  {isToday ? "Start the session when you are ready to begin accepting attendance scans." : "Choose another date to review its attendance records."}
+                </p>
+              </motion.section>
+            )}
+
+            {session && <AttendanceTable records={filteredAttendance} />}
+          </div>
+        ) : (
           <ParticipantsTable
             participants={filteredParticipants}
-            onEdit={(p:any) => 
-              setEditingParticipant({
-            id: p.id,
-            firstName: p.first_name,
-            lastName: p.last_name,
-            middleInitial: p.middle_initial,
-            ageGroup: p.age_group,
-            gender: p.gender,
-            contact: p.contact_number,
-            school: p.school,
-            course: p.course,
-            gradeYear: p.grade_year,
-              })}
+            onEdit={(p:any) => setEditingParticipant({
+              id: p.id,
+              firstName: p.first_name,
+              lastName: p.last_name,
+              middleInitial: p.middle_initial,
+              ageGroup: p.age_group,
+              gender: p.gender,
+              contact: p.contact_number,
+              school: p.school,
+              course: p.course,
+              gradeYear: p.grade_year,
+            })}
             onDelete={(id: string) => {
-            const participant = participants.find((p) => p.id === Number(id));
-            setParticipantToDelete(participant);
-          }}
+              const participant = participants.find((p) => p.id === Number(id));
+              setParticipantToDelete(participant);
+            }}
             onShowQR={handleShowQR}
             onDownloadQR={handleDownloadQR}
           />
         )}
       </main>
 
-      {/* EDIT MODAL */}
-      {editingParticipant && (
-        <EditModal
-          participant={editingParticipant}
-          onClose={() => setEditingParticipant(null)}
-          onSave={handleSaveParticipant}
-        />
-      )}
-
-      {/* QR MODAL */}
-      {qrData && (
-        <QRModal
-          name={qrData.name}
-          data={qrData.data}
-          studentCode={qrData.studentCode} // ✅ ADD THIS
-          onClose={() => setQrData(null)}
-        />
-      )}
+      {editingParticipant && <EditModal participant={editingParticipant} onClose={() => setEditingParticipant(null)} onSave={handleSaveParticipant} />}
+      {qrData && <QRModal name={qrData.name} data={qrData.data} studentCode={qrData.studentCode} onClose={() => setQrData(null)} />}
 
       {participantToDelete && (
-  <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-    <div className="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6">
-      <h2 className="text-lg font-semibold text-gray-900 mb-2">
-        Delete participant?
-      </h2>
-
-      <p className="text-sm text-gray-600 mb-6">
-        Are you sure you want to delete{" "}
-        <span className="font-semibold text-gray-900">
-          {participantToDelete.first_name} {participantToDelete.last_name}
-        </span>
-        ? This action cannot be undone.
-      </p>
-
-      <div className="flex gap-3 justify-end">
-        <button
-          onClick={() => setParticipantToDelete(null)}
-          className="px-4 py-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200"
-        >
-          Cancel
-        </button>
-
-        <button
-          onClick={() => handleDeleteParticipant(participantToDelete.id)}
-          className="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700"
-        >
-          Delete
-        </button>
-      </div>
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/55 p-4 backdrop-blur-sm">
+          <motion.div initial={{ opacity: 0, scale: 0.92, y: 18 }} animate={{ opacity: 1, scale: 1, y: 0 }} className="surface-card max-h-[calc(100dvh-1.5rem)] w-full max-w-sm overflow-y-auto rounded-3xl p-5 shadow-2xl sm:p-6">
+            <div className="mb-4 grid h-12 w-12 place-items-center rounded-2xl bg-rose-50 text-rose-600">
+              <Trash2 size={22} />
+            </div>
+            <h2 className="text-xl font-bold text-slate-900">Delete participant?</h2>
+            <p className="mt-2 text-sm leading-6 text-slate-600">
+              Are you sure you want to delete <span className="font-bold text-slate-900">{participantToDelete.first_name} {participantToDelete.last_name}</span>? This action cannot be undone.
+            </p>
+            <div className="mt-6 flex justify-end gap-3">
+              <button onClick={() => setParticipantToDelete(null)} className="rounded-xl bg-slate-100 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-200">Cancel</button>
+              <button onClick={() => handleDeleteParticipant(participantToDelete.id)} className="rounded-xl bg-rose-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-rose-500/20 transition hover:-translate-y-0.5 hover:bg-rose-700">Delete</button>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </div>
-  </div>
-)}
-    </div>
-
-    
   );
   
 }

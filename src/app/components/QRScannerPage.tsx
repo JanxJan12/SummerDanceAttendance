@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { BrowserMultiFormatReader } from '@zxing/browser';
-import { CheckCircle, XCircle, Camera, Keyboard } from 'lucide-react';
+import { Camera, CheckCircle, Clock3, Keyboard, ScanLine, ShieldCheck, XCircle, Zap } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import {supabase } from '../../lib/supabase';
 import Navigation from "./Navigation";
@@ -172,7 +172,7 @@ const handleScan = async (data: string) => {
     const scannedCode = String(studentId).trim();
 
 if (!scannedCode) {
-  throw new Error("Invalid student code");
+  throw new Error("Invalid member code");
 }
 
 const { data: student, error: studentError } = await supabase
@@ -183,11 +183,11 @@ const { data: student, error: studentError } = await supabase
 
 if (studentError) {
   console.error("STUDENT ERROR:", studentError);
-  throw new Error("Failed to find student");
+  throw new Error("Failed to find participant");
 }
 
 if (!student) {
-  throw new Error("Student not found");
+  throw new Error("Participant not found");
 }
 
 studentId = student.id;
@@ -284,89 +284,54 @@ const handleManualSubmit = async (e: React.FormEvent) => {
 };
 
   return (
-        <div className="min-h-screen bg-gray-900 flex flex-col">
-          <div className="bg-gray-900 border-b border-gray-800 px-4 py-4">
-  <div className="max-w-3xl mx-auto flex justify-center gap-3">
-    <button
-      onClick={() => setCurrentPage("dashboard")}
-      className={`px-4 py-2 rounded-xl text-sm font-medium transition ${
-        currentPage === "dashboard"
-          ? "bg-blue-600 text-white"
-          : "text-gray-300 hover:bg-gray-800"
-      }`}
-    >
-      Dashboard
-    </button>
+    <div className="page-mobile-clearance relative min-h-screen overflow-x-clip bg-[#18070a] text-white">
+      <div className="pointer-events-none absolute left-[-12rem] top-20 h-96 w-96 rounded-full bg-indigo-600/24 blur-3xl" />
+      <div className="pointer-events-none absolute right-[-10rem] top-[34rem] h-80 w-80 rounded-full bg-cyan-500/18 blur-3xl" />
 
-    <button
-      onClick={() => setCurrentPage("register")}
-      className={`px-4 py-2 rounded-xl text-sm font-medium transition ${
-        currentPage === "register"
-          ? "bg-blue-600 text-white"
-          : "text-gray-300 hover:bg-gray-800"
-      }`}
-    >
-      Register
-    </button>
+      <div className="relative mx-auto max-w-7xl px-3 py-5 min-[390px]:px-4 sm:px-6 lg:px-8">
+        <Navigation currentPage={currentPage} onNavigate={setCurrentPage} />
+      </div>
 
-    <button
-      onClick={() => setCurrentPage("scanner")}
-      className="px-4 py-2 rounded-xl text-sm font-medium bg-blue-600 text-white"
-    >
-      Scanner
-    </button>
-  </div>
-</div>
-
-
-      
-        <header className="bg-gray-900 px-4 py-6 text-center">
-          <h1 className="text-2xl font-semibold text-white">
-            Scan QR Code
-          </h1>
-          <p className="text-gray-400 text-sm mt-1">
-            Align the code inside the frame
-          </p>
-        </header>
-
-      <div className="flex-1 flex items-center justify-center p-4 sm:p-6">
-        <div className="w-full max-w-lg"> 
-          <div className="relative">
-                    <div className="absolute top-3 left-1/2 -translate-x-1/2 bg-black/70 px-3 py-1 rounded-full text-xs text-white z-10">
-          {scanning ? "Scanning..." : "Camera Off"}
+      <header className="relative mx-auto max-w-5xl px-3 pb-5 pt-2 min-[390px]:px-4 sm:px-6 sm:pb-6 sm:pt-3 lg:px-8">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div className="flex items-start gap-3 sm:gap-4">
+            <div className="next-moves-seal mt-0.5 h-12 w-12 shrink-0 rounded-2xl sm:h-14 sm:w-14" role="img" aria-label="Next Moves Company logo" />
+            <div>
+              <div className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.18em] text-cyan-300"><Zap size={14} /> Next Moves live check-in</div>
+              <h1 className="text-[clamp(1.65rem,8vw,2.25rem)] font-black leading-tight tracking-tight sm:text-4xl">Scan company QR pass</h1>
+              <p className="mt-2 text-sm text-slate-400">Center the Next Moves code inside the illuminated frame for instant attendance.</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 self-start rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs font-bold text-slate-200 backdrop-blur sm:self-auto">
+            <span className={`h-2.5 w-2.5 rounded-full ${scanning ? 'status-live bg-emerald-400' : 'bg-rose-400'}`} />
+            {selectedPeriod} · {scanning ? 'Camera ready' : 'Camera offline'}
+          </div>
         </div>
-            <div className="aspect-square bg-black rounded-2xl overflow-hidden relative shadow-xl">
-              <video
-                ref={videoRef}
-                className="w-full h-full object-cover"
-                autoPlay
-                playsInline
-                muted
-              />
-              <div className="absolute inset-0 bg-black/20"></div>
+      </header>
 
-              <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
-                
-                {/* Scan Box */}
-              <div className="w-64 sm:w-72 h-64 sm:h-72 border-2 border-blue-400 rounded-3xl relative shadow-[0_0_20px_rgba(59,130,246,0.4)]">
+      <main className="relative mx-auto grid max-w-5xl gap-4 px-3 min-[390px]:px-4 sm:gap-5 sm:px-6 lg:grid-cols-[1.2fr_0.8fr] lg:px-8">
+        <motion.section initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} className="rounded-[2rem] border border-white/10 bg-white/5 p-3 shadow-[0_30px_80px_-35px_rgba(214,155,32,0.38)] backdrop-blur-xl sm:p-4">
+          <div className="relative overflow-hidden rounded-[1.5rem] bg-black shadow-2xl [transform:perspective(1000px)_rotateX(0.8deg)]">
+            <div className="aspect-square">
+              <video ref={videoRef} className="h-full w-full object-cover" autoPlay playsInline muted />
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_15%,rgba(2,6,23,0.52)_100%)]" />
 
-                {/* Corner accents */}
-                <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-white rounded-tl-xl"></div>
-                <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-white rounded-tr-xl"></div>
-                <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-white rounded-bl-xl"></div>
-                <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-white rounded-br-xl"></div>
-
-                {/* Smooth scanning line */}
-                <div className="absolute left-0 w-full h-1 bg-blue-400 animate-[scan_2s_linear_infinite]"></div>
-
+              <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+                <div className="scanner-frame-glow scanner-target relative aspect-square rounded-[2rem] border border-cyan-300/70 shadow-[0_0_45px_rgba(248,207,82,0.3),inset_0_0_35px_rgba(214,155,32,0.14)]">
+                  <span className="absolute left-[-2px] top-[-2px] h-10 w-10 rounded-tl-2xl border-l-4 border-t-4 border-white" />
+                  <span className="absolute right-[-2px] top-[-2px] h-10 w-10 rounded-tr-2xl border-r-4 border-t-4 border-white" />
+                  <span className="absolute bottom-[-2px] left-[-2px] h-10 w-10 rounded-bl-2xl border-b-4 border-l-4 border-white" />
+                  <span className="absolute bottom-[-2px] right-[-2px] h-10 w-10 rounded-br-2xl border-b-4 border-r-4 border-white" />
+                  {scanning && <div className="absolute left-3 right-3 top-3 h-0.5 animate-[scan_2s_ease-in-out_infinite] bg-gradient-to-r from-transparent via-cyan-300 to-transparent shadow-[0_0_15px_rgba(248,207,82,0.9)]" />}
+                </div>
               </div>
 
-              </div>
               {!scanning && (
-                <div className="absolute inset-0 flex items-center justify-center bg-gray-800">
+                <div className="absolute inset-0 flex items-center justify-center bg-slate-950/90 backdrop-blur-sm">
                   <div className="text-center">
-                    <Camera className="text-gray-400 mx-auto mb-2" size={48} />
-                    <p className="text-gray-400">Camera not available</p>
+                    <div className="mx-auto mb-3 grid h-14 w-14 place-items-center rounded-2xl bg-white/8 text-slate-400"><Camera size={27} /></div>
+                    <p className="font-semibold text-slate-300">Camera not available</p>
+                    <p className="mt-1 text-xs text-slate-500">Check camera permissions and reload.</p>
                   </div>
                 </div>
               )}
@@ -374,119 +339,79 @@ const handleManualSubmit = async (e: React.FormEvent) => {
 
             <AnimatePresence>
               {scanResult && (
-                <motion.div
-                  initial={{ scale: 0.8, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  exit={{ scale: 0.8, opacity: 0 }}
-                  className="absolute inset-0 flex items-center justify-center"
-                >
-                  <div
-                    className={`rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-2xl max-w-sm w-full mx-4 ${
-                      scanResult.status === 'success' ? 'bg-green-600' : 'bg-red-600'
-                    }`}
+                <motion.div initial={{ scale: 0.82, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.86, opacity: 0 }} className="absolute inset-0 z-20 flex items-center justify-center bg-slate-950/55 p-4 backdrop-blur-sm">
+                  <motion.div
+                    initial={{ rotateX: -8 }}
+                    animate={{ rotateX: 0 }}
+                    className={`w-full max-w-sm overflow-hidden rounded-3xl border p-6 text-center text-white shadow-2xl ${scanResult.status === 'success' ? 'border-emerald-300/30 bg-gradient-to-br from-emerald-500 to-teal-600' : 'border-rose-300/30 bg-gradient-to-br from-rose-500 to-red-700'}`}
                   >
-                    <div className="text-center text-white">
-                      {scanResult.status === 'success' ? (
-                        <CheckCircle className="mx-auto mb-2 sm:mb-3" size={36} />
-                      ) : (
-                        <XCircle className="mx-auto mb-2 sm:mb-3" size={36} />
-                      )}
-                      <h3 className="text-lg sm:text-xl font-semibold mb-1">{scanResult.name}</h3>
-                      <p className="text-xs sm:text-sm opacity-90">
-                        {scanResult.status === "success"
-                          ? scanResult.attendanceStatus
-                          : "Error"}
-                      </p>
-                      <p className="text-xs sm:text-sm opacity-75 mt-2">{scanResult.time}</p>
+                    <div className="mx-auto mb-3 grid h-14 w-14 place-items-center rounded-2xl bg-white/16">
+                      {scanResult.status === 'success' ? <CheckCircle size={30} /> : <XCircle size={30} />}
                     </div>
-                  </div>
+                    <h3 className="text-xl font-black">{scanResult.name}</h3>
+                    <p className="mt-1 text-sm font-semibold text-white/90">{scanResult.status === "success" ? scanResult.attendanceStatus : "Scan error"}</p>
+                    <p className="mt-3 text-xs text-white/70">{scanResult.time}</p>
+                  </motion.div>
                 </motion.div>
               )}
             </AnimatePresence>
           </div>
 
-          <div className="mt-4 sm:mt-6">
+          <div className="flex items-center justify-center gap-2 px-3 pb-1 pt-4 text-xs font-medium text-slate-400">
+            <ShieldCheck size={14} className="text-cyan-400" /> Scanner locks briefly after each result to prevent duplicate reads.
+          </div>
+        </motion.section>
+
+        <motion.aside initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.08 }} className="space-y-5">
+          <section className="rounded-3xl border border-white/10 bg-white/5 p-5 backdrop-blur-xl">
+            <div className="mb-4 flex items-center gap-3">
+              <div className="grid h-10 w-10 place-items-center rounded-2xl bg-indigo-500/15 text-indigo-300"><Keyboard size={19} /></div>
+              <div><h2 className="font-bold text-white">Manual check-in</h2><p className="text-xs text-slate-400">Use a Next Moves member code if scanning is unavailable.</p></div>
+            </div>
             {!showManualInput ? (
-              <button
-                onClick={() => setShowManualInput(true)}
-                className="w-full flex items-center justify-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 bg-gray-800 text-white rounded-xl hover:bg-gray-700 transition-colors border border-gray-700 text-sm sm:text-base"
-              >
-                <Keyboard size={16} className="sm:w-[18px] sm:h-[18px]" />
-                Manual Input
+              <button onClick={() => setShowManualInput(true)} className="w-full rounded-xl border border-white/10 bg-white/8 px-4 py-3 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:border-indigo-400/50 hover:bg-indigo-500/15">
+                Enter member code
               </button>
             ) : (
               <form onSubmit={handleManualSubmit} className="space-y-3">
-                <input
-                  type="text"
-                  value={manualId}
-                  onChange={(e) => setManualId(e.target.value)}
-                  placeholder="ENTER STUDENT CODE"
-                  className="w-full px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl bg-gray-800 border border-gray-700 text-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-sm sm:text-base"
-                  autoFocus
-                />
+                <input type="text" value={manualId} onChange={(e) => setManualId(e.target.value)} placeholder="MEMBER CODE" className="w-full rounded-xl border border-white/10 bg-slate-950/55 px-4 py-3 font-mono text-sm tracking-wider text-white outline-none transition placeholder:text-slate-600 focus:border-cyan-400 focus:ring-4 focus:ring-cyan-500/10" autoFocus />
                 <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowManualInput(false);
-                      setManualId('');
-                    }}
-                    className="flex-1 px-3 sm:px-4 py-2 sm:py-2.5 bg-gray-800 text-gray-300 rounded-xl hover:bg-gray-700 transition-colors border border-gray-700 text-sm sm:text-base"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="flex-1 px-3 sm:px-4 py-2 sm:py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors text-sm sm:text-base"
-                  >
-                    Mark Present
-                  </button>
+                  <button type="button" onClick={() => { setShowManualInput(false); setManualId(''); }} className="flex-1 rounded-xl bg-white/8 px-3 py-2.5 text-sm font-semibold text-slate-300 transition hover:bg-white/12">Cancel</button>
+                  <button type="submit" className="flex-1 rounded-xl bg-gradient-to-r from-indigo-600 to-blue-600 px-3 py-2.5 text-sm font-semibold text-white shadow-lg shadow-indigo-950/30 transition hover:-translate-y-0.5">Check in</button>
                 </div>
               </form>
             )}
-          </div>
-        </div>
-      </div>
+          </section>
 
-      {recentScans.length > 0 && (
-        <div className="bg-gray-800 border-t border-gray-700 px-4 sm:px-6 py-3 sm:py-4">
-          <h3 className="text-xs sm:text-sm font-semibold text-gray-300 mb-2 sm:mb-3">Recent Scans</h3>
-          <div className="space-y-2 max-h-40 sm:max-h-48 overflow-y-auto">
-            {recentScans.map((scan, index) => (
-              <motion.div
-                key={scan.id + scan.time}
-                initial={{ x: -20, opacity: 0 }}
-                animate={{ x: 0, opacity: 1 }}
-                transition={{ delay: index * 0.05 }}
-                className={`flex items-center justify-between p-2 sm:p-3 rounded-lg ${
-                  scan.status === 'success' ? 'bg-green-900/30' : 'bg-red-900/30'
-                } ${index === 0 ? 'ring-1 sm:ring-2 ring-blue-500' : ''}`}
-              >
-                <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-                  {scan.status === 'success' ? (
-                    <CheckCircle className="text-green-400 flex-shrink-0" size={16} />
-                  ) : (
-                    <XCircle className="text-red-400 flex-shrink-0" size={16} />
-                  )}
-                  <div className="min-w-0">
-                    <p className="text-white text-xs sm:text-sm font-medium truncate">{scan.name}</p>
-                    <p className="text-gray-400 text-[10px] sm:text-xs">{scan.time}</p>
-                  </div>
-                </div>
-                <span
-                  className={`text-[10px] sm:text-xs font-medium px-1.5 sm:px-2 py-0.5 sm:py-1 rounded flex-shrink-0 ${
-                    scan.status === 'success'
-                      ? 'bg-green-500/20 text-green-400'
-                      : 'bg-red-500/20 text-red-400'
-                  }`}
-                >
-                  {scan.status === "success" ? scan.attendanceStatus : "Error"}
-                </span>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      )}
+          <section className="rounded-3xl border border-white/10 bg-white/5 p-5 backdrop-blur-xl">
+            <div className="mb-4 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="grid h-10 w-10 place-items-center rounded-2xl bg-cyan-500/15 text-cyan-300"><Clock3 size={19} /></div>
+                <div><h2 className="font-bold text-white">Recent scans</h2><p className="text-xs text-slate-400">This device session</p></div>
+              </div>
+              <span className="rounded-full bg-white/8 px-2.5 py-1 text-xs font-bold text-slate-300">{recentScans.length}</span>
+            </div>
+
+            {recentScans.length === 0 ? (
+              <div className="grid min-h-40 place-items-center rounded-2xl border border-dashed border-white/10 bg-slate-950/20 px-4 text-center">
+                <div><ScanLine className="mx-auto mb-2 text-slate-600" size={26} /><p className="text-sm font-semibold text-slate-400">Waiting for the first scan</p></div>
+              </div>
+            ) : (
+              <div className="max-h-[22rem] space-y-2 overflow-y-auto pr-1">
+                {recentScans.map((scan, index) => (
+                  <motion.div key={scan.id + scan.time} initial={{ x: -16, opacity: 0 }} animate={{ x: 0, opacity: 1 }} className={`flex items-center justify-between rounded-2xl border p-3 ${scan.status === 'success' ? 'border-emerald-500/15 bg-emerald-500/8' : 'border-rose-500/15 bg-rose-500/8'} ${index === 0 ? 'ring-1 ring-cyan-400/35' : ''}`}>
+                    <div className="flex min-w-0 items-center gap-3">
+                      {scan.status === 'success' ? <CheckCircle className="shrink-0 text-emerald-400" size={17} /> : <XCircle className="shrink-0 text-rose-400" size={17} />}
+                      <div className="min-w-0"><p className="truncate text-sm font-semibold text-white">{scan.name}</p><p className="text-[11px] text-slate-500">{scan.time}</p></div>
+                    </div>
+                    <span className={`ml-2 shrink-0 rounded-full px-2 py-1 text-[10px] font-bold ${scan.status === 'success' ? 'bg-emerald-400/12 text-emerald-300' : 'bg-rose-400/12 text-rose-300'}`}>{scan.status === "success" ? scan.attendanceStatus : "Error"}</span>
+                  </motion.div>
+                ))}
+              </div>
+            )}
+          </section>
+        </motion.aside>
+      </main>
     </div>
   );
 }

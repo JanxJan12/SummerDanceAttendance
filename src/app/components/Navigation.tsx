@@ -5,48 +5,38 @@ interface NavigationProps {
   onNavigate: (page: 'dashboard' | 'register' | 'scanner') => void;
 }
 
+const navigationItems = [
+  { id: 'dashboard' as const, label: 'Dashboard', icon: LayoutDashboard },
+  { id: 'register' as const, label: 'Register', icon: UserPlus },
+  { id: 'scanner' as const, label: 'Scanner', icon: ScanLine },
+];
+
 export default function Navigation({ currentPage, onNavigate }: NavigationProps) {
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg md:relative md:shadow-none z-50 safe-area-bottom">
-      <div className="flex items-center justify-around md:justify-center md:gap-4 px-2 sm:px-4 py-2 sm:py-3">
-        <button
-          onClick={() => onNavigate('dashboard')}
-          className={`flex flex-col md:flex-row items-center gap-1 md:gap-2 px-3 sm:px-4 py-2 rounded-lg transition-colors font-medium text-xs sm:text-sm md:text-base ${
-            currentPage === 'dashboard'
-              ? 'bg-blue-600 text-white'
-              : 'text-gray-600 hover:bg-gray-100'
-          }`}
-        >
-          <LayoutDashboard size={18} className="sm:w-5 sm:h-5" />
-          <span className="md:hidden text-[10px] sm:text-xs">Dashboard</span>
-          <span className="hidden md:inline">Dashboard</span>
-        </button>
+    <nav className="mobile-nav-safe surface-card fixed left-3 right-3 z-50 rounded-2xl p-1.5 shadow-2xl md:relative md:left-auto md:right-auto md:mx-auto md:w-fit md:rounded-2xl">
+      <div className="flex items-center justify-around gap-1 md:justify-center">
+        {navigationItems.map(({ id, label, icon: Icon }) => {
+          const active = currentPage === id;
 
-        <button
-          onClick={() => onNavigate('register')}
-          className={`flex flex-col md:flex-row items-center gap-1 md:gap-2 px-3 sm:px-4 py-2 rounded-lg transition-colors font-medium text-xs sm:text-sm md:text-base ${
-            currentPage === 'register'
-              ? 'bg-blue-600 text-white'
-              : 'text-gray-600 hover:bg-gray-100'
-          }`}
-        >
-          <UserPlus size={18} className="sm:w-5 sm:h-5" />
-          <span className="md:hidden text-[10px] sm:text-xs">Register</span>
-          <span className="hidden md:inline">Register</span>
-        </button>
-
-        <button
-          onClick={() => onNavigate('scanner')}
-          className={`flex flex-col md:flex-row items-center gap-1 md:gap-2 px-3 sm:px-4 py-2 rounded-lg transition-colors font-medium text-xs sm:text-sm md:text-base ${
-            currentPage === 'scanner'
-              ? 'bg-blue-600 text-white'
-              : 'text-gray-600 hover:bg-gray-100'
-          }`}
-        >
-          <ScanLine size={18} className="sm:w-5 sm:h-5" />
-          <span className="md:hidden text-[10px] sm:text-xs">Scanner</span>
-          <span className="hidden md:inline">Scanner</span>
-        </button>
+          return (
+            <button
+              key={id}
+              onClick={() => onNavigate(id)}
+              className={`tap-target group relative flex min-w-0 flex-1 flex-col items-center gap-1 overflow-hidden rounded-xl px-2 py-2 text-xs font-semibold transition-all duration-200 sm:px-4 md:min-w-[126px] md:flex-none md:flex-row md:justify-center md:gap-2 md:py-2.5 ${
+                active
+                  ? 'bg-gradient-to-r from-indigo-600 to-blue-600 text-white shadow-lg shadow-indigo-500/20'
+                  : 'text-slate-500 hover:-translate-y-0.5 hover:bg-indigo-50 hover:text-indigo-700'
+              }`}
+              aria-current={active ? 'page' : undefined}
+            >
+              <Icon size={18} className="transition-transform duration-200 group-hover:scale-110" />
+              <span className="truncate text-[10px] sm:text-xs md:text-sm">{label}</span>
+              {active && (
+                <span className="absolute inset-x-5 bottom-0 h-0.5 rounded-full bg-white/70 md:hidden" />
+              )}
+            </button>
+          );
+        })}
       </div>
     </nav>
   );

@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { toDataURL } from "qrcode";
-import { UserPlus, Download, RotateCcw } from 'lucide-react';
+import { CheckCircle2, Download, QrCode, RotateCcw, ShieldCheck, Sparkles } from 'lucide-react';
+import { motion } from 'motion/react';
 import { supabase } from "../../lib/supabase";
 import Navigation from "./Navigation";
 
@@ -166,66 +167,94 @@ const handleDownloadQR = () => {
 
   if (registered) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4 sm:p-6">
-        <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg p-6 sm:p-8 w-full max-w-md text-center">
-          <div className="mb-6">
-            <div className="w-12 h-12 sm:w-16 sm:h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <UserPlus className="text-green-600" size={24} />
+      <div className="app-shell page-mobile-clearance min-h-screen">
+        <span className="ambient-orb left-[8%] top-[18%] h-52 w-52 bg-emerald-300/20" />
+        <span className="ambient-orb right-[7%] top-[45%] h-64 w-64 bg-indigo-300/20 [animation-delay:-2.5s]" />
+        <div className="mx-auto max-w-7xl px-3 py-5 min-[390px]:px-4 sm:px-6 lg:px-8">
+          <Navigation currentPage={currentPage} onNavigate={setCurrentPage} />
+        </div>
+        <div className="flex items-center justify-center px-3 py-4 min-[390px]:px-4 sm:px-6 sm:py-8">
+          <motion.div
+            initial={{ opacity: 0, y: 24, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ type: 'spring', stiffness: 190, damping: 20 }}
+            className="surface-card w-full max-w-lg overflow-hidden rounded-3xl text-center"
+          >
+            <div className="relative overflow-hidden bg-gradient-to-br from-indigo-700 via-blue-700 to-cyan-600 px-6 pb-16 pt-8 text-white">
+              <div className="next-moves-art absolute inset-0 opacity-20 mix-blend-luminosity" />
+              <div className="absolute -right-12 -top-10 h-36 w-36 rounded-full border-[24px] border-white/10" />
+              <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.18, type: 'spring' }} className="relative mx-auto mb-4 grid h-16 w-16 place-items-center rounded-2xl bg-white/18 shadow-xl backdrop-blur">
+                <CheckCircle2 size={32} />
+              </motion.div>
+              <h2 className="relative text-2xl font-black tracking-tight sm:text-3xl">Next Moves pass created</h2>
+              <p className="relative mt-2 text-sm text-white/80">The participant is ready for company attendance scanning.</p>
             </div>
-            <h2 className="text-xl sm:text-2xl font-semibold text-gray-900 mb-2">Registration Successful!</h2>
-            <p className="text-sm sm:text-base text-gray-600">
-              {formData.firstName} {formData.lastName}
-            </p>
-          </div>
 
-          <div className="bg-gray-50 rounded-xl p-4 sm:p-6 mb-6">
-            <p className="text-xs sm:text-sm text-gray-600 mb-4">Your QR Code</p>
-            <div className="flex justify-center">
-              <QRCodeSVG id="qrCanvas" value={qrData} size={200} />
+            <div className="relative -mt-10 px-6 pb-7 sm:px-8">
+              <div className="mx-auto w-fit max-w-full rounded-[1.75rem] bg-white p-3 shadow-[0_22px_55px_-25px_rgba(30,41,59,0.6)] ring-1 ring-slate-100">
+                <div className="rounded-2xl border border-indigo-100 p-4">
+                  <QRCodeSVG id="qrCanvas" value={qrData} size={200} className="h-auto w-full max-w-[200px]" />
+                </div>
+              </div>
+              <h3 className="mt-5 text-xl font-black text-slate-900">{formData.firstName} {formData.lastName}</h3>
+              <p className="mt-1 flex items-center justify-center gap-1.5 text-xs font-medium text-slate-500"><ShieldCheck size={14} className="text-emerald-500" /> Official Next Moves QR identity</p>
+
+              <div className="mt-6 space-y-3">
+                <button onClick={handleDownloadQR} className="brand-button flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold">
+                  <Download size={17} /> Download QR Code
+                </button>
+                <button onClick={handleRegisterAnother} className="flex w-full items-center justify-center gap-2 rounded-xl bg-slate-100 px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-200">
+                  <RotateCcw size={17} /> Register another
+                </button>
+              </div>
             </div>
-          </div>
-
-          <div className="space-y-3">
-            <button
-              onClick={handleDownloadQR}
-              className="w-full flex items-center justify-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors font-medium text-sm sm:text-base"
-            >
-              <Download size={16} className="sm:w-[18px] sm:h-[18px]" />
-              Download QR Code
-            </button>
-            <button
-              onClick={handleRegisterAnother}
-              className="w-full flex items-center justify-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-colors font-medium text-sm sm:text-base"
-            >
-              <RotateCcw size={16} className="sm:w-[18px] sm:h-[18px]" />
-              Register Another
-            </button>
-          </div>
+          </motion.div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50"> 
-
-          <div className="max-w-6xl mx-auto p-4">
-            <Navigation
-              currentPage={currentPage}
-              onNavigate={setCurrentPage}
-            />
+    <div className="app-shell page-mobile-clearance min-h-screen">
+      <span className="ambient-orb left-[-7rem] top-44 h-64 w-64 bg-indigo-300/20" />
+      <span className="ambient-orb right-[-8rem] top-[40rem] h-72 w-72 bg-cyan-300/20 [animation-delay:-3s]" />
+      <div className="mx-auto max-w-7xl px-3 py-5 min-[390px]:px-4 sm:px-6 lg:px-8">
+        <Navigation currentPage={currentPage} onNavigate={setCurrentPage} />
+      </div>
+      <div className="mx-auto grid max-w-6xl gap-4 px-3 pb-8 min-[390px]:px-4 sm:gap-6 sm:px-6 lg:grid-cols-[0.78fr_1.22fr] lg:items-start lg:px-8">
+        <aside className="page-enter lg:sticky lg:top-6">
+          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-700 via-blue-700 to-cyan-600 p-7 text-white shadow-[0_30px_70px_-35px_rgba(104,18,25,0.82)] sm:p-9">
+            <div className="next-moves-art absolute inset-0 opacity-20 mix-blend-luminosity" />
+            <div className="absolute -right-16 -top-16 h-52 w-52 rounded-full border-[32px] border-white/8" />
+            <div className="absolute -bottom-24 -left-16 h-56 w-56 rounded-full bg-cyan-300/12 blur-2xl" />
+            <div className="relative">
+              <div className="next-moves-seal mb-6 h-14 w-14 rounded-2xl shadow-xl" role="img" aria-label="Next Moves Company logo" />
+              <div className="mb-3 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.18em] text-cyan-100"><Sparkles size={14} /> Next Moves enrollment</div>
+              <h1 className="text-[clamp(1.8rem,9vw,2.25rem)] font-black leading-tight tracking-tight sm:text-4xl">Create a company QR pass.</h1>
+              <p className="mt-4 text-sm leading-6 text-indigo-100">Add the participant's details once. Next Moves will create their unique QR identity for every attendance session.</p>
+              <div className="mt-8 hidden space-y-3 lg:block">
+                {['Member profile and demographics', 'School and contact details', 'Official Next Moves QR pass'].map((item, index) => (
+                  <div key={item} className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/8 px-4 py-3 text-sm font-semibold backdrop-blur">
+                    <span className="grid h-7 w-7 place-items-center rounded-xl bg-white/15 text-xs">{index + 1}</span>{item}
+                  </div>
+                ))}
+              </div>
+              <div className="mt-8 hidden items-center gap-2 border-t border-white/15 pt-5 text-xs text-indigo-100 lg:flex"><ShieldCheck size={15} /> Information is used only for attendance operations.</div>
+            </div>
           </div>
-      <div className="flex items-center justify-center p-4 sm:p-6">
-        <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg p-6 sm:p-8 w-full max-w-lg">
-          <div className="text-center mb-6 sm:mb-8">
-            <h1 className="text-xl sm:text-2xl font-semibold text-gray-900 mb-2">Participant Registration</h1>
-            <p className="text-sm sm:text-base text-gray-600">Fill in your details to receive your QR code</p>
+        </aside>
+
+        <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }} className="surface-card rounded-3xl p-5 sm:p-8">
+          <div className="mb-7">
+            <div className="mb-3 grid h-11 w-11 place-items-center rounded-2xl bg-indigo-50 text-indigo-600 lg:hidden"><QrCode size={21} /></div>
+            <h2 className="text-2xl font-black tracking-tight text-slate-900">Next Moves Members</h2>
+            <p className="mt-1 text-sm text-slate-500">Complete the required fields marked with an asterisk.</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
-            <div>
-              <h3 className="text-xs sm:text-sm font-semibold text-gray-700 mb-3 sm:mb-4 flex items-center gap-2">
-                <span className="w-5 h-5 sm:w-6 sm:h-6 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-[10px] sm:text-xs">
+            <div className="registration-section">
+              <h3 className="mb-4 flex items-center gap-2 text-sm font-bold text-slate-800">
+                <span className="grid h-7 w-7 place-items-center rounded-xl bg-indigo-100 text-xs text-indigo-700">
                   1
                 </span>
                 Personal Information
@@ -239,9 +268,7 @@ const handleDownloadQR = () => {
                     type="text"
                     value={formData.firstName}
                     onChange={(e) => handleChange('firstName', e.target.value)}
-                    className={`w-full px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg border ${
-                      errors.firstName ? 'border-red-500' : 'border-gray-200'
-                    } focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all text-sm sm:text-base`}
+                    className={`field-control px-4 py-2.5 text-sm ${errors.firstName ? '!border-rose-400 bg-rose-50/40' : ''}`}
                   />
                   {errors.firstName && (
                     <p className="text-xs text-red-500 mt-1">{errors.firstName}</p>
@@ -256,9 +283,7 @@ const handleDownloadQR = () => {
                     type="text"
                     value={formData.lastName}
                     onChange={(e) => handleChange('lastName', e.target.value)}
-                    className={`w-full px-4 py-2.5 rounded-lg border ${
-                      errors.lastName ? 'border-red-500' : 'border-gray-200'
-                    } focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all`}
+                    className={`field-control px-4 py-2.5 text-sm ${errors.lastName ? '!border-rose-400 bg-rose-50/40' : ''}`}
                   />
                   {errors.lastName && <p className="text-xs text-red-500 mt-1">{errors.lastName}</p>}
                 </div>
@@ -272,20 +297,20 @@ const handleDownloadQR = () => {
                     maxLength={1}
                     value={formData.middleInitial}
                     onChange={(e) => handleChange('middleInitial', e.target.value.toUpperCase())}
-                    className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all"
+                    className="field-control px-4 py-2.5 text-sm"
                   />
                 </div>
               </div>
             </div>
 
-            <div>
-              <h3 className="text-sm font-semibold text-gray-700 mb-4 flex items-center gap-2">
-                <span className="w-6 h-6 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-xs">
+            <div className="registration-section">
+              <h3 className="mb-4 flex items-center gap-2 text-sm font-bold text-slate-800">
+                <span className="grid h-7 w-7 place-items-center rounded-xl bg-indigo-100 text-xs text-indigo-700">
                   2
                 </span>
                 Demographics
               </h3>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Age Group <span className="text-red-500">*</span>
@@ -293,9 +318,7 @@ const handleDownloadQR = () => {
                   <select
                     value={formData.ageGroup}
                     onChange={(e) => handleChange('ageGroup', e.target.value)}
-                    className={`w-full px-4 py-2.5 rounded-lg border ${
-                      errors.ageGroup ? 'border-red-500' : 'border-gray-200'
-                    } focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all`}
+                    className={`field-control px-4 py-2.5 text-sm ${errors.ageGroup ? '!border-rose-400 bg-rose-50/40' : ''}`}
                   >
                     <option value="">Select</option>
                     <option value="Kids">6–7 | KIDS</option>
@@ -312,9 +335,7 @@ const handleDownloadQR = () => {
                   <select
                     value={formData.gender}
                     onChange={(e) => handleChange('gender', e.target.value)}
-                    className={`w-full px-4 py-2.5 rounded-lg border ${
-                      errors.gender ? 'border-red-500' : 'border-gray-200'
-                    } focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all`}
+                    className={`field-control px-4 py-2.5 text-sm ${errors.gender ? '!border-rose-400 bg-rose-50/40' : ''}`}
                   >
                     <option value="">Select</option>
                     <option value="Male">Male</option>
@@ -325,9 +346,9 @@ const handleDownloadQR = () => {
               </div>
             </div>
 
-            <div>
-              <h3 className="text-sm font-semibold text-gray-700 mb-4 flex items-center gap-2">
-                <span className="w-6 h-6 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-xs">
+            <div className="registration-section">
+              <h3 className="mb-4 flex items-center gap-2 text-sm font-bold text-slate-800">
+                <span className="grid h-7 w-7 place-items-center rounded-xl bg-indigo-100 text-xs text-indigo-700">
                   3
                 </span>
                 School Information
@@ -340,9 +361,7 @@ const handleDownloadQR = () => {
                   <select
                     value={formData.school}
                     onChange={(e) => handleChange('school', e.target.value)}
-                    className={`w-full px-4 py-2.5 rounded-lg border ${
-                      errors.school ? 'border-red-500' : 'border-gray-200'
-                    } focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all`}
+                    className={`field-control px-4 py-2.5 text-sm ${errors.school ? '!border-rose-400 bg-rose-50/40' : ''}`}
                   >
                     <option value="">Select School</option>
                     {schools.map((school) => (
@@ -363,9 +382,7 @@ const handleDownloadQR = () => {
                       type="text"
                       value={formData.customSchool}
                       onChange={(e) => handleChange('customSchool', e.target.value)}
-                      className={`w-full px-4 py-2.5 rounded-lg border ${
-                        errors.customSchool ? 'border-red-500' : 'border-gray-200'
-                      } focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all`}
+                      className={`field-control px-4 py-2.5 text-sm ${errors.customSchool ? '!border-rose-400 bg-rose-50/40' : ''}`}
                     />
                     {errors.customSchool && (
                       <p className="text-xs text-red-500 mt-1">{errors.customSchool}</p>
@@ -381,7 +398,7 @@ const handleDownloadQR = () => {
                     type="text"
                     value={formData.courseStrand}
                     onChange={(e) => handleChange('courseStrand', e.target.value)}
-                    className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all"
+                    className="field-control px-4 py-2.5 text-sm"
                   />
                 </div>
 
@@ -393,15 +410,15 @@ const handleDownloadQR = () => {
                     type="text"
                     value={formData.gradeYear}
                     onChange={(e) => handleChange('gradeYear', e.target.value)}
-                    className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all"
+                    className="field-control px-4 py-2.5 text-sm"
                   />
                 </div>
               </div>
             </div>
 
-            <div>
-              <h3 className="text-sm font-semibold text-gray-700 mb-4 flex items-center gap-2">
-                <span className="w-6 h-6 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-xs">
+            <div className="registration-section">
+              <h3 className="mb-4 flex items-center gap-2 text-sm font-bold text-slate-800">
+                <span className="grid h-7 w-7 place-items-center rounded-xl bg-indigo-100 text-xs text-indigo-700">
                   4
                 </span>
                 Contact
@@ -415,9 +432,7 @@ const handleDownloadQR = () => {
                   value={formData.contactNumber}
                   onChange={(e) => handleChange('contactNumber', e.target.value)}
                   placeholder="09XX XXX XXXX"
-                  className={`w-full px-4 py-2.5 rounded-lg border ${ 
-                    errors.contactNumber ? 'border-red-500' : 'border-gray-200'
-                  } focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all`}
+                  className={`field-control px-4 py-2.5 text-sm ${errors.contactNumber ? '!border-rose-400 bg-rose-50/40' : ''}`}
                 />
                 {errors.contactNumber && (
                   <p className="text-xs text-red-500 mt-1">{errors.contactNumber}</p>
@@ -427,14 +442,14 @@ const handleDownloadQR = () => {
 
             <button
               type="submit"
-              className="w-full py-2.5 sm:py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors font-medium shadow-sm text-sm sm:text-base"
+              className="brand-button flex w-full items-center justify-center gap-2 rounded-xl px-5 py-3.5 text-sm font-bold"
             >
-              Register & Generate QR
+              <QrCode size={18} /> Register &amp; Generate QR
             </button>
           </form>
-        </div>
+        </motion.div>
+      </div>
     </div>
-  </div>
 
   );
 }
