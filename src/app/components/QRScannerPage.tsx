@@ -3,7 +3,7 @@ import { BrowserMultiFormatReader, type IScannerControls } from '@zxing/browser'
 import { Camera, CheckCircle, Clock3, Keyboard, RotateCcw, ScanLine, ShieldCheck, XCircle, Zap } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import {supabase } from '../../lib/supabase';
-import Navigation from "./Navigation";
+import Navigation, { type PageId } from "./Navigation";
 
 interface ScanResult {
   id: string;
@@ -18,8 +18,8 @@ export default function QRScannerPage({
   setCurrentPage,
   selectedPeriod,
 }: {
-  currentPage: "dashboard" | "register" | "scanner";
-  setCurrentPage: (page: "dashboard" | "register" | "scanner") => void;
+  currentPage: PageId;
+  setCurrentPage: (page: PageId) => void;
   selectedPeriod: "Morning" | "Afternoon";
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -229,22 +229,34 @@ console.log("FINAL STUDENT ID:", studentId);
       .maybeSingle();
 
     if (existing) {
-      throw new Error("Already scanned");
-    }
+      if (existing.status === "Absent" || existing.status === "Absent - Excused") {
+        const { error: updateError } = await supabase
+          .from("attendance")
+          .update({
+            status: attendanceStatus,
+            excuse_reason: null,
+            status_source: "QR Scanner",
+            created_at: new Date().toISOString(),
+          })
+          .eq("id", existing.id);
 
-    // ✅ 5. INSERT ATTENDANCE
-    const { error: insertError } = await supabase
-      .from("attendance")
-      .insert([
-        {
-          student_id: studentId,
-          session_id: session.id,
-          status: attendanceStatus,
-        },
-      ]);
+        if (updateError) throw updateError;
+      } else {
+        throw new Error("Already scanned");
+      }
+    } else {
+      // ✅ 5. INSERT ATTENDANCE
+      const { error: insertError } = await supabase
+        .from("attendance")
+        .insert([
+          {
+            student_id: studentId,
+            session_id: session.id,
+            status: attendanceStatus,
+          },
+        ]);
 
-    if (insertError) {
-      throw insertError;
+      if (insertError) throw insertError;
     }
 
     // ✅ 6. SUCCESS UI

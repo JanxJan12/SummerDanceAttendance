@@ -8,8 +8,9 @@ import Header from "./components/Header";
 import TabNavigation from "./components/TabNavigation";
 import SearchBar from "./components/SearchBar";
 import StatsCards from "./components/StatsCards";
-import Navigation from './components/Navigation';
+import Navigation, { type PageId } from './components/Navigation';
 import AttendanceTable, { AttendanceRecord } from "./components/AttendanceTable";
+import AttendanceMonitoringPage from "./components/AttendanceMonitoringPage";
 import ParticipantsTable from "./components/ParticipantsTable";
 import EditModal from "./components/EditModal";
 import QRModal from "./components/QRModal";
@@ -29,8 +30,7 @@ import { motion } from "motion/react";
 
 export default function App()  { 
   
-  const [currentPage, setCurrentPage] = useState<
-  "dashboard" | "register" | "scanner">("dashboard");
+  const [currentPage, setCurrentPage] = useState<PageId>("dashboard");
   
   const [activeTab, setActiveTab] = useState<"attendance" | "participants">(
     "attendance");
@@ -207,6 +207,8 @@ const handleCreateSession = async () => {
     const record = attendance.find(
       (a) => a.student_id == student.id
     );
+    const attendanceStatus = (record?.status || "Absent") as AttendanceRecord["status"];
+    const isCheckedIn = ["Present", "Late", "Late - Excused"].includes(attendanceStatus);
 
     return {
       id: student.id.toString(), // string REQUIRED
@@ -217,9 +219,9 @@ const handleCreateSession = async () => {
 
       gender: student.gender || "-",
 
-      status: record?.status || "Absent",
+      status: attendanceStatus,
 
-      time: record
+      time: record && isCheckedIn
         ? new Date(record.created_at).toLocaleTimeString("en-PH", {
             hour: "2-digit",
             minute: "2-digit",
@@ -227,15 +229,27 @@ const handleCreateSession = async () => {
           })
         : "-",
 
+      checkedInAt: isCheckedIn ? record?.created_at : undefined,
+
+      excuseReason: record?.excuse_reason || undefined,
+
+      statusSource: record?.status_source || (record ? "QR Scanner" : undefined),
+
+      isOfficial: student.is_official,
+
+      membershipYear: student.membership_year || undefined,
+
       isNew: false,
     };
   });
 
   // ✅ FILTER ATTENDANCE
-  const statusOrder = {
+  const statusOrder: Record<AttendanceRecord["status"], number> = {
     Present: 1,
     Late: 2,
-    Absent: 3,
+    "Late - Excused": 3,
+    Absent: 4,
+    "Absent - Excused": 5,
   };
 
   const filteredAttendance = attendanceRecords
@@ -244,7 +258,11 @@ const handleCreateSession = async () => {
         .toLowerCase()
         .includes(searchQuery.toLowerCase());
 
-      const matchesStatus = statusFilter === "All" || r.status === statusFilter;
+      const matchesStatus =
+        statusFilter === "All" ||
+        (statusFilter === "Present" && r.status === "Present") ||
+        (statusFilter === "Late" && r.status.startsWith("Late")) ||
+        (statusFilter === "Absent" && r.status.startsWith("Absent"));
 
       return matchesSearch && matchesStatus;
     })
@@ -269,11 +287,11 @@ const handleCreateSession = async () => {
   ).length;
 
   const lateCount = attendanceRecords.filter(
-    (r) => r.status === "Late"
+    (r) => r.status.startsWith("Late")
   ).length;
 
   const absentCount = attendanceRecords.filter(
-    (r) => r.status === "Absent"
+    (r) => r.status.startsWith("Absent")
   ).length;
   // ✅ DELETE
       const handleDeleteParticipant = async (id: number) => {
@@ -429,14 +447,18 @@ if (currentPage === "scanner") {
 
   // ✅ EXPORT (for Header)
 const handleExportCSV = () => {
+  const exportingAttendance = currentPage === "monitor" || activeTab === "attendance";
+  const attendanceRows = currentPage === "monitor" ? attendanceRecords : filteredAttendance;
   const rows =
-    activeTab === "attendance"
-      ? filteredAttendance.map((r) => ({
+    exportingAttendance
+      ? attendanceRows.map((r) => ({
           Name: r.name,
           Age: r.age,
           Gender: r.gender,
           Status: r.status,
           Time: r.time,
+          "Excuse Reason": r.excuseReason || "",
+          "Recorded By": r.statusSource || "",
           Date: selectedDate,
           Session: selectedPeriod,
         }))
@@ -480,7 +502,7 @@ const handleExportCSV = () => {
 
   link.href = url;
   link.download =
-    activeTab === "attendance"
+    exportingAttendance
       ? `attendance-${selectedDate}-${selectedPeriod}.csv`
       : `participants.csv`;
 
@@ -490,6 +512,24 @@ const handleExportCSV = () => {
 
   URL.revokeObjectURL(url);
 };
+
+if (currentPage === "monitor") {
+  return (
+    <AttendanceMonitoringPage
+      currentPage={currentPage}
+      onNavigate={setCurrentPage}
+      records={attendanceRecords}
+      session={session}
+      selectedDate={selectedDate}
+      onDateChange={setSelectedDate}
+      selectedPeriod={selectedPeriod}
+      onPeriodChange={setSelectedPeriod}
+      todayDate={todayDate}
+      onExportCSV={handleExportCSV}
+      onRecordsChanged={loadData}
+    />
+  );
+}
 
   return (
     <div className="app-shell page-mobile-clearance">

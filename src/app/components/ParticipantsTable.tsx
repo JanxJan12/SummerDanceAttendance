@@ -13,6 +13,8 @@ interface Participant {
   school: string | null;
   grade_year: string | null;
   course: string | null;
+  is_official?: boolean;
+  membership_year?: string | null;
 }
 
 interface ParticipantsTableProps {
@@ -91,6 +93,7 @@ export default function ParticipantsTable({
                       <h4 className="break-words text-base font-bold leading-5 text-slate-900">{fullName}</h4>
                       {participant.student_code && <p className="mt-1 break-all font-mono text-[11px] font-semibold tracking-wider text-slate-400">{participant.student_code}</p>}
                       <div className="mt-2 flex flex-wrap gap-1.5">
+                        {participant.is_official && <span className="rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-[11px] font-bold text-amber-800">Official {participant.membership_year || ''}</span>}
                         <span className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${getAgeBadgeClass(participant.age_group)}`}>{participant.age_group}</span>
                         <span className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${getGenderBadgeClass(participant.gender)}`}>{participant.gender}</span>
                       </div>
@@ -140,7 +143,10 @@ export default function ParticipantsTable({
                     transition={{ delay: Math.min(index * 0.02, 0.28) }}
                     className="group border-b border-slate-100/80 transition-colors last:border-b-0 hover:bg-indigo-50/35"
                   >
-                    <td className="px-4 py-4 pl-6 text-sm font-semibold text-slate-900">{participant.first_name}</td>
+                    <td className="px-4 py-4 pl-6 text-sm font-semibold text-slate-900">
+                      <div>{participant.first_name}</div>
+                      {participant.is_official && <span className="mt-1 inline-flex rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[9px] font-black uppercase tracking-wide text-amber-800">Official {participant.membership_year || ''}</span>}
+                    </td>
                     <td className="px-4 py-4 text-sm font-semibold text-slate-900">{participant.last_name}</td>
                     <td className="px-4 py-4 text-sm text-slate-600">{participant.middle_initial || '-'}</td>
                     <td className="px-4 py-4 text-sm">

@@ -4,7 +4,7 @@ import { toDataURL } from "qrcode";
 import { CheckCircle2, Download, QrCode, RotateCcw, ShieldCheck, Sparkles } from 'lucide-react';
 import { motion } from 'motion/react';
 import { supabase } from "../../lib/supabase";
-import Navigation from "./Navigation";
+import Navigation, { type PageId } from "./Navigation";
 
 interface FormData {
   firstName: string;
@@ -43,7 +43,13 @@ const schools = [
 
 
 
-export default function RegistrationPage({ currentPage, setCurrentPage }: any) {
+export default function RegistrationPage({
+  currentPage,
+  setCurrentPage,
+}: {
+  currentPage: PageId;
+  setCurrentPage: (page: PageId) => void;
+}) {
 const [formData, setFormData] = useState<FormData>(initialFormData);
 const [registered, setRegistered] = useState(false);
 const [qrData, setQrData] = useState("");

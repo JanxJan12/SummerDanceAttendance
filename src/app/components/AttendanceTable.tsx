@@ -1,25 +1,44 @@
 import { Clock3, ListChecks, UsersRound } from "lucide-react";
 import { motion } from "motion/react";
 
+export type AttendanceRecordStatus =
+  | "Present"
+  | "Late"
+  | "Late - Excused"
+  | "Absent"
+  | "Absent - Excused";
+
+export const getAttendanceStatusLabel = (status: AttendanceRecordStatus) => {
+  if (status === "Late - Excused") return "Late with Excuse";
+  if (status === "Absent - Excused") return "Absent with Excuse";
+  return status;
+};
+
 export interface AttendanceRecord {
   id: string;
   name: string;
   age: string;
   gender: string;
-  status: "Present" | "Late" | "Absent";
+  status: AttendanceRecordStatus;
   time: string;
+  checkedInAt?: string;
+  excuseReason?: string;
+  statusSource?: "QR Scanner" | "Secretary";
+  isOfficial?: boolean;
+  membershipYear?: string;
   isNew?: boolean;
 }
 
 interface AttendanceTableProps {
   records: AttendanceRecord[];
+  onRecordClick?: (record: AttendanceRecord) => void;
 }
 
 const getStatusStyle = (status: string) => {
   if (status === "Present") {
     return { container: "bg-emerald-50 text-emerald-700 border-emerald-100", dot: "bg-emerald-500" };
   }
-  if (status === "Late") {
+  if (status.startsWith("Late")) {
     return { container: "bg-amber-50 text-amber-700 border-amber-100", dot: "bg-amber-500" };
   }
   return { container: "bg-rose-50 text-rose-700 border-rose-100", dot: "bg-rose-500" };
@@ -47,7 +66,7 @@ const initials = (name: string) =>
     .join("")
     .toUpperCase();
 
-export default function AttendanceTable({ records }: AttendanceTableProps) {
+export default function AttendanceTable({ records, onRecordClick }: AttendanceTableProps) {
   return (
     <motion.section
       initial={{ opacity: 0, y: 12 }}
@@ -88,12 +107,15 @@ export default function AttendanceTable({ records }: AttendanceTableProps) {
             {records.map((record, index) => {
               const statusStyle = getStatusStyle(record.status);
               return (
-                <motion.article
+                <motion.button
                   key={`mobile-${record.id}`}
+                  type="button"
+                  onClick={() => onRecordClick?.(record)}
+                  disabled={!onRecordClick}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: Math.min(index * 0.035, 0.3) }}
-                  className="rounded-2xl border border-slate-100 bg-white/80 p-4 shadow-sm"
+                  className={`w-full rounded-2xl border border-slate-100 bg-white/80 p-4 text-left shadow-sm transition ${onRecordClick ? "cursor-pointer hover:-translate-y-0.5 hover:border-amber-200 hover:shadow-md" : "cursor-default"}`}
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex min-w-0 items-center gap-3">
@@ -102,12 +124,13 @@ export default function AttendanceTable({ records }: AttendanceTableProps) {
                       </span>
                       <div className="min-w-0">
                         <h4 className="break-words text-sm font-bold leading-5 text-slate-900">{record.name}</h4>
-                        <p className="mt-0.5 text-xs font-medium text-slate-500">{record.time === '-' ? 'Not checked in' : `Checked in at ${record.time}`}</p>
+                        <p className="mt-0.5 text-xs font-medium text-slate-500">{record.time === '-' ? 'No check-in time' : `Checked in at ${record.time}`}</p>
+                        {record.excuseReason && <p className="mt-1 line-clamp-2 text-xs font-medium text-amber-700">Excuse: {record.excuseReason}</p>}
                       </div>
                     </div>
                     <div className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-bold ${statusStyle.container}`}>
                       <span className={`h-2 w-2 rounded-full ${statusStyle.dot}`} />
-                      {record.status}
+                      {getAttendanceStatusLabel(record.status)}
                     </div>
                   </div>
                   <div className="mt-4 grid grid-cols-2 gap-2 border-t border-slate-100 pt-3">
@@ -120,7 +143,7 @@ export default function AttendanceTable({ records }: AttendanceTableProps) {
                       <span className={`mt-1 inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold ${getGenderStyle(record.gender)}`}>{record.gender}</span>
                     </div>
                   </div>
-                </motion.article>
+                </motion.button>
               );
             })}
           </div>
@@ -148,12 +171,12 @@ export default function AttendanceTable({ records }: AttendanceTableProps) {
                     className="group border-b border-slate-100/80 transition-colors last:border-b-0 hover:bg-indigo-50/35"
                   >
                     <td className="px-5 py-4 pl-6 text-sm font-semibold text-slate-900">
-                      <div className="flex items-center gap-3">
+                      <button type="button" onClick={() => onRecordClick?.(record)} disabled={!onRecordClick} className={`flex items-center gap-3 text-left ${onRecordClick ? "cursor-pointer hover:text-[#9f101c]" : "cursor-default"}`}>
                         <span className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-indigo-100 to-cyan-100 text-xs font-black text-indigo-700 transition-transform group-hover:scale-105">
                           {initials(record.name)}
                         </span>
                         {record.name}
-                      </div>
+                      </button>
                     </td>
                     <td className="px-5 py-4 text-sm">
                       <span className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${getAgeBadgeClass(record.age)}`}>
@@ -166,9 +189,12 @@ export default function AttendanceTable({ records }: AttendanceTableProps) {
                       </span>
                     </td>
                     <td className="px-5 py-4">
-                      <div className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold ${statusStyle.container}`}>
-                        <span className={`h-2 w-2 rounded-full ${statusStyle.dot}`} />
-                        {record.status}
+                      <div>
+                        <div className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold ${statusStyle.container}`}>
+                          <span className={`h-2 w-2 rounded-full ${statusStyle.dot}`} />
+                          {getAttendanceStatusLabel(record.status)}
+                        </div>
+                        {record.excuseReason && <p className="mt-1 max-w-52 truncate text-xs font-medium text-amber-700" title={record.excuseReason}>{record.excuseReason}</p>}
                       </div>
                     </td>
                     <td className="px-5 py-4 text-sm font-medium text-slate-600">{record.time}</td>

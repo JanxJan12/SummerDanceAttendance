@@ -1,12 +1,15 @@
-import { LayoutDashboard, UserPlus, ScanLine } from 'lucide-react';
+import { Activity, LayoutDashboard, UserPlus, ScanLine } from 'lucide-react';
+
+export type PageId = 'dashboard' | 'monitor' | 'register' | 'scanner';
 
 interface NavigationProps {
-  currentPage: 'dashboard' | 'register' | 'scanner';
-  onNavigate: (page: 'dashboard' | 'register' | 'scanner') => void;
+  currentPage: PageId;
+  onNavigate: (page: PageId) => void;
 }
 
 const navigationItems = [
   { id: 'dashboard' as const, label: 'Dashboard', icon: LayoutDashboard },
+  { id: 'monitor' as const, label: 'Monitor', icon: Activity },
   { id: 'register' as const, label: 'Register', icon: UserPlus },
   { id: 'scanner' as const, label: 'Scanner', icon: ScanLine },
 ];
@@ -15,7 +18,7 @@ export default function Navigation({ currentPage, onNavigate }: NavigationProps)
   return (
     <nav
       aria-label="Primary navigation"
-      className="surface-card relative z-20 mx-auto w-full max-w-md rounded-2xl p-1.5 shadow-lg md:w-fit"
+      className="surface-card relative z-20 mx-auto w-full max-w-xl rounded-2xl p-1.5 shadow-lg md:w-fit md:max-w-none"
     >
       <div className="flex items-center justify-around gap-1 md:justify-center">
         {navigationItems.map(({ id, label, icon: Icon }) => {
