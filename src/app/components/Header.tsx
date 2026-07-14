@@ -10,6 +10,11 @@ export default function Header({ onExportCSV }: HeaderProps) {
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-2 px-3 py-3 sm:px-6 lg:px-8">
         <div className="flex min-w-0 items-center gap-2.5 sm:gap-3">
           <div className="next-moves-seal relative h-10 w-10 shrink-0 rounded-2xl sm:h-11 sm:w-11" role="img" aria-label="Next Moves Company logo">
+            <img
+              src="/next-moves-brand.jpg"
+              alt=""
+              className="h-full w-full object-cover"
+            />
             <span className="status-live absolute -right-1 -top-1 h-3 w-3 rounded-full border-2 border-white bg-emerald-400" />
           </div>
           <div className="min-w-0">

@@ -26,15 +26,15 @@ interface ParticipantsTableProps {
 }
 
 const getAgeBadgeClass = (ageGroup: string) => {
-  if (ageGroup === "Kids") return "bg-teal-50 text-teal-700 border-teal-100";
-  if (ageGroup === "Teens") return "bg-indigo-50 text-indigo-700 border-indigo-100";
-  if (ageGroup === "Adult") return "bg-orange-50 text-orange-700 border-orange-100";
+  if (ageGroup === "Kids") return "border-amber-200 bg-amber-50 text-amber-800";
+  if (ageGroup === "Teens") return "border-rose-200 bg-rose-50 text-rose-700";
+  if (ageGroup === "Adult") return "border-indigo-200 bg-indigo-50 text-indigo-800";
   return "bg-slate-50 text-slate-600 border-slate-200";
 };
 
 const getGenderBadgeClass = (gender: string) => {
-  if (gender === "Male") return "bg-blue-50 text-blue-700 border-blue-100";
-  if (gender === "Female") return "bg-pink-50 text-pink-700 border-pink-100";
+  if (gender === "Male") return "border-cyan-200 bg-cyan-50 text-cyan-800";
+  if (gender === "Female") return "border-rose-200 bg-rose-50 text-rose-700";
   return "bg-slate-50 text-slate-600 border-slate-200";
 };
 
@@ -51,15 +51,24 @@ export default function ParticipantsTable({
       animate={{ opacity: 1, y: 0 }}
       className="surface-card overflow-hidden rounded-3xl"
     >
-      <div className="flex items-center gap-3 border-b border-slate-100/80 px-5 py-5 sm:px-6">
-        <div className="grid h-11 w-11 place-items-center rounded-2xl bg-cyan-50 text-cyan-700">
-          <UsersRound size={21} />
-        </div>
-        <div>
-          <h3 className="font-bold text-slate-900">Next Moves Directory</h3>
-          <p className="text-sm text-slate-500">
-            {participants.length} registered participant{participants.length !== 1 ? 's' : ''}
-          </p>
+      <div className="relative overflow-hidden border-b border-amber-200/60 bg-gradient-to-r from-indigo-900 via-indigo-700 to-indigo-900 px-5 py-5 sm:px-6">
+        <div className="brand-rays pointer-events-none absolute inset-0 opacity-50" />
+        <div className="relative flex items-center gap-3">
+          <div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl border border-amber-300/50 bg-amber-300/15 text-amber-200 shadow-inner">
+            <UsersRound size={21} />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-amber-300">Member registry</p>
+            <h3 className="mt-0.5 font-bold text-white">Next Moves Directory</h3>
+            <p className="text-sm text-amber-100/80">
+              {participants.length} Registered Member{participants.length !== 1 ? 's' : ''}
+            </p>
+          </div>
+          <img
+            src="/next-moves-brand.jpg"
+            alt=""
+            className="hidden h-14 w-14 shrink-0 rounded-2xl border border-amber-300/50 object-cover shadow-lg sm:block"
+          />
         </div>
       </div>
 
@@ -69,8 +78,8 @@ export default function ParticipantsTable({
             <div className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-2xl bg-slate-100 text-slate-400">
               <UsersRound size={25} />
             </div>
-            <h4 className="font-semibold text-slate-800">No participants found</h4>
-            <p className="mt-1 text-sm text-slate-500">Try another search or register a new participant.</p>
+            <h4 className="font-semibold text-slate-800">No Members found</h4>
+            <p className="mt-1 text-sm text-slate-500">Try another search or register a new member.</p>
           </div>
         </div>
       ) : (
@@ -85,10 +94,10 @@ export default function ParticipantsTable({
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: Math.min(index * 0.035, 0.3) }}
-                  className="rounded-2xl border border-slate-100 bg-white/85 p-4 shadow-sm"
+                  className="rounded-2xl border border-amber-100 bg-white/90 p-4 shadow-sm transition-shadow hover:shadow-md"
                 >
                   <div className="flex min-w-0 items-start gap-3">
-                    <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-indigo-100 to-cyan-100 text-sm font-black text-indigo-700">{memberInitials}</span>
+                    <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-indigo-100 to-cyan-100 text-sm font-black text-indigo-800 shadow-inner">{memberInitials}</span>
                     <div className="min-w-0 flex-1">
                       <h4 className="break-words text-base font-bold leading-5 text-slate-900">{fullName}</h4>
                       {participant.student_code && <p className="mt-1 break-all font-mono text-[11px] font-semibold tracking-wider text-slate-400">{participant.student_code}</p>}
@@ -100,7 +109,7 @@ export default function ParticipantsTable({
                     </div>
                   </div>
 
-                  <dl className="mt-4 grid grid-cols-1 gap-3 border-t border-slate-100 pt-4 min-[420px]:grid-cols-2">
+                  <dl className="mt-4 grid grid-cols-1 gap-3 border-t border-amber-100 pt-4 min-[420px]:grid-cols-2">
                     <div className="min-w-0"><dt className="text-[10px] font-bold uppercase tracking-[0.1em] text-slate-400">Contact</dt><dd className="mt-1 break-words text-xs font-medium text-slate-700">{participant.contact_number || '-'}</dd></div>
                     <div className="min-w-0"><dt className="text-[10px] font-bold uppercase tracking-[0.1em] text-slate-400">School</dt><dd className="mt-1 break-words text-xs font-medium text-slate-700">{participant.school || '-'}</dd></div>
                     <div className="min-w-0"><dt className="text-[10px] font-bold uppercase tracking-[0.1em] text-slate-400">Course / Strand</dt><dd className="mt-1 break-words text-xs font-medium text-slate-700">{participant.course || '-'}</dd></div>
@@ -121,13 +130,13 @@ export default function ParticipantsTable({
           <div className="responsive-scroll hidden overflow-x-auto xl:block">
           <table className="w-full min-w-[1050px]">
             <thead>
-              <tr className="border-b border-slate-100 bg-slate-50/80">
+              <tr className="border-b border-amber-300/40 bg-indigo-900">
                 {['First Name', 'Last Name', 'MI', 'Age Group', 'Gender', 'Contact Number', 'School', 'Course / Strand', 'Grade / Year'].map((heading) => (
-                  <th key={heading} className="px-4 py-4 text-left text-[11px] font-bold uppercase tracking-[0.1em] text-slate-500 first:pl-6">
+                  <th key={heading} className="px-4 py-4 text-left text-[11px] font-bold uppercase tracking-[0.1em] text-amber-100 first:pl-6">
                     {heading}
                   </th>
                 ))}
-                <th className="sticky right-0 z-20 w-[170px] border-l border-slate-100 bg-slate-50 px-3 py-4 text-center text-[11px] font-bold uppercase tracking-[0.1em] text-slate-500">
+                <th className="sticky right-0 z-20 w-[170px] border-l border-amber-300/25 bg-indigo-900 px-3 py-4 text-center text-[11px] font-bold uppercase tracking-[0.1em] text-amber-100">
                   Actions
                 </th>
               </tr>
@@ -141,7 +150,7 @@ export default function ParticipantsTable({
                     initial={{ opacity: 0, x: -8 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: Math.min(index * 0.02, 0.28) }}
-                    className="group border-b border-slate-100/80 transition-colors last:border-b-0 hover:bg-indigo-50/35"
+                    className="group border-b border-amber-100/80 transition-colors last:border-b-0 hover:bg-amber-50/60"
                   >
                     <td className="px-4 py-4 pl-6 text-sm font-semibold text-slate-900">
                       <div>{participant.first_name}</div>
@@ -163,7 +172,7 @@ export default function ParticipantsTable({
                     <td className="max-w-[170px] truncate px-4 py-4 text-sm text-slate-600" title={participant.school || '-'}>{participant.school || '-'}</td>
                     <td className="max-w-[150px] truncate px-4 py-4 text-sm text-slate-600" title={participant.course || '-'}>{participant.course || '-'}</td>
                     <td className="px-4 py-4 text-sm text-slate-600">{participant.grade_year || '-'}</td>
-                    <td className="sticky right-0 z-10 w-[170px] border-l border-slate-100 bg-white/95 px-3 py-3 backdrop-blur transition-colors group-hover:bg-indigo-50/95">
+                    <td className="sticky right-0 z-10 w-[170px] border-l border-amber-100 bg-white/95 px-3 py-3 backdrop-blur transition-colors group-hover:bg-amber-50/95">
                       <div className="flex justify-center gap-1.5">
                         <button onClick={() => onShowQR(participant)} className="grid h-8 w-8 place-items-center rounded-lg bg-indigo-50 text-indigo-600 transition hover:-translate-y-0.5 hover:bg-indigo-600 hover:text-white" title="Show QR Code" aria-label={`Show QR code for ${fullName}`}>
                           <QrCode size={15} />

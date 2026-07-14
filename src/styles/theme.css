@@ -398,9 +398,7 @@
 
   .next-moves-seal {
     overflow: hidden;
-    background-image: url('/next-moves-brand.jpg');
-    background-position: center 43%;
-    background-size: 164%;
+    background: #4a0c12;
     box-shadow: 0 10px 24px -12px rgba(104, 18, 25, 0.75), inset 0 0 0 2px rgba(255,255,255,0.72);
   }
 
